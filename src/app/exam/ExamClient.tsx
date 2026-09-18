@@ -155,6 +155,8 @@ export default function ExamClient({
   // Toolbar modals
   const [showCalculator, setShowCalculator] = useState(false);
   const [showReportError, setShowReportError] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [reportSent, setReportSent] = useState(false);
 
   // Load questions — everyone calls the same route. The server decides
   // fresh (premium) vs cached (free) based on real subscription_status;
@@ -193,6 +195,24 @@ export default function ExamClient({
           setQuestions(generated);
           setCurrentSubject(generated[0]?.subject || "");
           setUsedFallback(false);
+          try {
+            const rawDraft = localStorage.getItem("passonce-exam-draft");
+            if (rawDraft) {
+              const draft = JSON.parse(rawDraft);
+              if (draft.examId === examId && Array.isArray(draft.questions) && draft.questions.length) {
+                setQuestions(draft.questions);
+                setAnswers(draft.answers || {});
+                setFlagged(new Set<number>(draft.flagged || []));
+                setTimeSpent(draft.timeSpent || {});
+                setSecondsLeft(typeof draft.secondsLeft === "number" ? draft.secondsLeft : durationMins * 60);
+                setCurrentSubject(draft.currentSubject || generated[0]?.subject || "");
+                setLocalIndex(typeof draft.localIndex === "number" ? draft.localIndex : 0);
+                setDraftRestored(true);
+              }
+            }
+          } catch {
+            localStorage.removeItem("passonce-exam-draft");
+          }
         }
       } catch {
         if (!cancelled) {
@@ -260,9 +280,18 @@ export default function ExamClient({
           subject_breakdown: subjectTally,
           status,
         });
+        if (status === "completed") {
+          await supabase.from("notifications").insert({
+            user_id: userId,
+            title: "Exam completed",
+            body: `${examId.toUpperCase()} practice finished with ${correct}/${questions.length} correct answers.`,
+            type: "exam",
+          });
+        }
       } catch {
-        // Non-fatal — the review still shows locally even if the save failed.
+        // Non-fatal — the review still shows locally if the database write fails.
       }
+      localStorage.removeItem("passonce-exam-draft");
 
       setSaving(false);
       setSubmitted(true);
@@ -277,6 +306,16 @@ export default function ExamClient({
 
   const handleSubmit = useCallback(() => finalizeSubmit("completed"), [finalizeSubmit]);
   const handleAbandon = useCallback(() => finalizeSubmit("abandoned"), [finalizeSubmit]);
+
+  // Save in-progress exam state so a refresh or leaving the page can be resumed.
+  useEffect(() => {
+    if (!questions || submitted || loadingQuestions) return;
+    localStorage.setItem("passonce-exam-draft", JSON.stringify({
+      examId, subjects, mode, difficulty, durationMins, questionCount,
+      questions, answers, flagged: Array.from(flagged), timeSpent,
+      secondsLeft, currentSubject, localIndex, savedAt: Date.now(),
+    }));
+  }, [questions, answers, flagged, timeSpent, secondsLeft, currentSubject, localIndex, submitted, loadingQuestions, examId, subjects, mode, difficulty, durationMins, questionCount]);
 
   // Countdown + per-question time tracking (one shared 1s tick)
   useEffect(() => {
@@ -310,14 +349,27 @@ export default function ExamClient({
     setAnswers((prev) => ({ ...prev, [current.id]: optionIndex }));
   };
 
-  const toggleFlag = () => {
+  const toggleFlag = async () => {
     if (!current) return;
+    const key = `${examId}:${current.subject}:${current.prompt}`.slice(0, 900);
+    const alreadySaved = flagged.has(current.id);
     setFlagged((prev) => {
       const next = new Set(prev);
-      if (next.has(current.id)) next.delete(current.id);
+      if (alreadySaved) next.delete(current.id);
       else next.add(current.id);
       return next;
     });
+    const supabase = createClient();
+    if (alreadySaved) {
+      await supabase.from("saved_questions").delete().eq("user_id", userId).eq("question_key", key);
+    } else {
+      await supabase.from("saved_questions").upsert({
+        user_id: userId, question_key: key, exam_id: examId,
+        subject: current.subject, prompt: current.prompt,
+        options: current.options, correct_index: current.correctIndex,
+        explanation: current.explanation || "",
+      }, { onConflict: "user_id,question_key" });
+    }
   };
 
   const goToSubject = (subject: string) => {
@@ -585,7 +637,21 @@ export default function ExamClient({
       {showCalculator && <CalculatorModal onClose={() => setShowCalculator(false)} />}
 
       {/* Report Error */}
-      {showReportError && <ReportErrorModal onClose={() => setShowReportError(false)} question={current.prompt} />}
+      {showReportError && (
+        <ReportErrorModal
+          onClose={() => setShowReportError(false)}
+          question={current.prompt}
+          examId={examId}
+          subject={current.subject}
+          userId={userId}
+          onSent={() => setReportSent(true)}
+        />
+      )}
+      {draftRestored && !submitted && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-[#0A0E1A] text-white px-4 py-2.5 rounded-full text-xs font-bold shadow-xl">
+          Your previous exam progress was restored.
+        </div>
+      )}
 
     </div>
   );
@@ -700,13 +766,20 @@ function CalculatorModal({ onClose }: { onClose: () => void }) {
 }
 
 
-function ReportErrorModal({ onClose, question }: { onClose: () => void; question: string }) {
+function ReportErrorModal({ onClose, question, examId, subject, userId, onSent }: { onClose: () => void; question: string; examId: string; subject: string; userId: string; onSent: () => void }) {
   const [text, setText] = useState("");
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  const submitReport = () => {
-    // TODO: send to a real endpoint/table — currently local-only confirmation.
-    setSent(true);
+  const submitReport = async () => {
+    if (!text.trim() || sending) return;
+    setSending(true);
+    const supabase = createClient();
+    const { error } = await supabase.from("question_reports").insert({
+      user_id: userId, exam_id: examId, subject, question, reason: text.trim(),
+    });
+    setSending(false);
+    if (!error) { setSent(true); onSent(); }
   };
 
   return (
@@ -727,8 +800,8 @@ function ReportErrorModal({ onClose, question }: { onClose: () => void; question
             rows={4}
             className="w-full border border-[#E5E7EB] rounded-lg p-3 text-sm focus:outline-none focus:border-[#10B981]"
           />
-          <button onClick={submitReport} disabled={!text.trim()} className="w-full bg-[#10B981] text-white font-bold text-xs uppercase py-2.5 rounded-lg disabled:opacity-50">
-            Submit Report
+          <button onClick={submitReport} disabled={!text.trim() || sending} className="w-full bg-[#10B981] text-white font-bold text-xs uppercase py-2.5 rounded-lg disabled:opacity-50">
+            {sending ? "Sending…" : "Submit Report"}
           </button>
         </>
       )}
