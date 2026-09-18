@@ -26,6 +26,10 @@ export type ProfileInitialData = {
   email: string;
   phone: string;
   subscriptionStatus: "free" | "premium";
+  avatarUrl: string;
+  profileTheme: string;
+  profileEffect: string;
+  avatarFrame: string;
 };
 
 export default function ProfileClient({ initial }: { initial: ProfileInitialData }) {
@@ -42,6 +46,12 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
   const [username, setUsername] = useState(initial.username);
   const [email, setEmail] = useState(initial.email);
   const [phone, setPhone] = useState(initial.phone);
+  const [avatarUrl, setAvatarUrl] = useState(initial.avatarUrl);
+  const [profileTheme, setProfileTheme] = useState(initial.profileTheme);
+  const [profileEffect, setProfileEffect] = useState(initial.profileEffect);
+  const [avatarFrame, setAvatarFrame] = useState(initial.avatarFrame);
+  const [styleSaved, setStyleSaved] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -63,7 +73,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
 
     const { error: profileErr } = await supabase
       .from("profiles")
-      .update({ full_name: fullName, username, phone })
+.update({ full_name: fullName, username, phone, avatar_url: avatarUrl, profile_theme: profileTheme, profile_effect: profileEffect, avatar_frame: avatarFrame })
       .eq("id", userData.user.id);
 
     if (profileErr) {
@@ -87,6 +97,45 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
 
     setProfileSaved(true);
     setTimeout(() => setProfileSaved(false), 2500);
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setProfileError("Avatar must be 5MB or smaller.");
+      return;
+    }
+    setAvatarUploading(true);
+    setProfileError("");
+    const supabase = createClient();
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) { setAvatarUploading(false); return; }
+    const path = `${userData.user.id}/avatar-${Date.now()}`;
+    const { error: uploadError } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
+    if (uploadError) {
+      setProfileError(uploadError.message);
+      setAvatarUploading(false);
+      return;
+    }
+    const { data: publicData } = supabase.storage.from("avatars").getPublicUrl(path);
+    setAvatarUrl(publicData.publicUrl);
+    await supabase.from("profiles").update({ avatar_url: publicData.publicUrl }).eq("id", userData.user.id);
+    setAvatarUploading(false);
+  };
+
+  const saveStyle = async () => {
+    const supabase = createClient();
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return;
+    const { error } = await supabase.from("profiles").update({
+      profile_theme: profileTheme, profile_effect: profileEffect, avatar_frame: avatarFrame,
+    }).eq("id", userData.user.id);
+    if (!error) {
+      setStyleSaved(true);
+      setTimeout(() => setStyleSaved(false), 2500);
+    }
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -196,12 +245,12 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
                 {initial.subscriptionStatus === "premium" ? (
                   <PremiumAvatarFrame size={88}>
                     <div className="w-full h-full bg-[#10B981]/10 text-[#10B981] flex items-center justify-center text-xl font-black">
-                      {fullName
-                        .split(" ")
-                        .filter(Boolean)
-                        .slice(0, 2)
-                        .map((n) => n[0]?.toUpperCase())
-                        .join("") || "U"}
+                      {avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        fullName.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("") || "U"
+                      )}
                     </div>
                   </PremiumAvatarFrame>
                 ) : (
@@ -403,6 +452,36 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
               </button>
             </div>
           </form>
+
+          {initial.subscriptionStatus === "premium" && (
+            <section className="bg-white border border-[#E5E7EB] rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-[#E5E7EB]">
+                <h3 className="text-sm font-bold text-[#0A0E1A] uppercase">Premium Style</h3>
+                <p className="text-[11px] text-[#6B7280] mt-1">Choose the look used on your premium profile.</p>
+              </div>
+              <div className="p-6 grid sm:grid-cols-3 gap-4 text-xs">
+                <label className="font-semibold text-[#6B7280]">Theme
+                  <select value={profileTheme} onChange={(e) => setProfileTheme(e.target.value)} className="mt-1 w-full border border-[#E5E7EB] rounded-lg p-2.5 text-[#0A0E1A]">
+                    <option value="aurora">Aurora</option><option value="galaxy">Galaxy</option><option value="neon">Neon</option><option value="emerald">Emerald</option>
+                  </select>
+                </label>
+                <label className="font-semibold text-[#6B7280]">Effect
+                  <select value={profileEffect} onChange={(e) => setProfileEffect(e.target.value)} className="mt-1 w-full border border-[#E5E7EB] rounded-lg p-2.5 text-[#0A0E1A]">
+                    <option value="sparkles">Sparkles</option><option value="shine">Moving Shine</option><option value="none">Clean</option>
+                  </select>
+                </label>
+                <label className="font-semibold text-[#6B7280]">Avatar Frame
+                  <select value={avatarFrame} onChange={(e) => setAvatarFrame(e.target.value)} className="mt-1 w-full border border-[#E5E7EB] rounded-lg p-2.5 text-[#0A0E1A]">
+                    <option value="rainbow">Rainbow</option><option value="glow">Glow</option><option value="minimal">Minimal</option>
+                  </select>
+                </label>
+              </div>
+              <div className="px-6 py-4 bg-[#F9FAFB] border-t border-[#E5E7EB] flex justify-end items-center gap-3">
+                {styleSaved && <span className="text-xs font-bold text-[#10B981]">Style saved</span>}
+                <button type="button" onClick={saveStyle} className="px-5 py-2.5 bg-[#0A0E1A] text-white rounded-lg font-bold text-xs uppercase hover:bg-[#10B981] transition">Save Style</button>
+              </div>
+            </section>
+          )}
 
           {/* Change Password Form */}
           <form
