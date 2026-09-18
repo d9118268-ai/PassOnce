@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
+import PremiumStar from "@/components/PremiumStar";
+import PremiumAvatarFrame from "@/components/PremiumAvatarFrame";
 import {
   LayoutDashboard,
   BookOpen,
@@ -135,8 +137,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
     <div className="min-h-screen bg-[#F9FAFB] text-[#0A0E1A] font-sans flex flex-col">
 
       {/* Top Icon Nav — matches dashboard, replaces the old sidebar */}
-      <header className="bg-[#FFFFFF] border-b border-[#E5E7EB] px-3 sm:px-6 py-2 sticky top-0 z-30">
-        <div className="flex items-center justify-between gap-2">
+<header className="bg-[#065F46] border-b border-[#064E3B] shadow-md px-3 sm:px-6 py-2 sticky top-0 z-30">        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 shrink-0">
             <div className="w-7 h-7 relative">
               <Image src="/header-logo.png" alt="PassOnce logo" fill className="object-contain" />
@@ -190,8 +191,10 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
               </button>
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="font-bold text-[#0A0E1A] truncate">{fullName || "Unnamed User"}</h2>
-              <p className="text-xs text-[#10B981] font-semibold truncate">@{username || "username"}</p>
+<h2 className="font-bold text-[#0A0E1A] truncate flex items-center gap-1.5">
+  {fullName || "Unnamed User"}
+  {initial.subscriptionStatus === "premium" && <PremiumStar size={20} />}
+</h2>              <p className="text-xs text-[#10B981] font-semibold truncate">@{username || "username"}</p>
               <p className="text-xs text-[#6B7280] truncate">{email}</p>
             </div>
             <span

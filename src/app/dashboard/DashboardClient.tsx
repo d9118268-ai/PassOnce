@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from '@/lib/supabase/client'
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -34,6 +34,8 @@ import {
   Moon,
 } from "lucide-react";
 import { containsExplicitContent } from "@/lib/chat-filter";
+import AiTutorTyping from "@/components/AiTutorTyping";
+import PremiumStar from "@/components/PremiumStar";
 
 // Dummy directory for the username search — replace with a real user lookup
 // (Supabase) once accounts exist.
@@ -175,6 +177,7 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
   const [tutorMessages, setTutorMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [tutorInput, setTutorInput] = useState("");
   const [tutorLoading, setTutorLoading] = useState(false);
+  const [tutorLimitReached, setTutorLimitReached] = useState(false);
 
   const sendTutorMessage = async () => {
     if (!tutorInput.trim() || !isPremium) return;
@@ -363,13 +366,12 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
     <div className="min-h-screen bg-[#F9FAFB] text-[#0A0E1A] font-sans flex flex-col">
 
       {/* Top Icon Nav — replaces the old sidebar; works the same on every screen size */}
-      <header className="bg-[#FFFFFF] border-b border-[#E5E7EB] px-3 sm:px-6 py-2 sticky top-0 z-30">
-        <div className="flex items-center justify-between gap-2">
+<header className="bg-[#065F46] border-b border-[#064E3B] shadow-md px-3 sm:px-6 py-2 sticky top-0 z-30">        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-7 h-7 relative">
-              <Image src="/header-logo.png" alt="PassOnce logo" fill className="object-contain" />
-            </div>
-            <span className="font-extrabold text-sm tracking-tight hidden sm:inline">PassOnce</span>
+<div className="w-9 h-9 rounded-full bg-white flex items-center justify-center overflow-hidden shadow ring-2 ring-white/25">
+  <Image src="/header-logo.png" alt="PassOnce logo" width={26} height={26} className="object-contain" />
+</div>
+<span className="font-extrabold text-sm tracking-tight hidden sm:inline text-white">PassOnce</span>
           </div>
 
           <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
@@ -384,7 +386,7 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
           <div className="flex items-center gap-1 shrink-0 relative">
             <button
               onClick={() => setShowSettingsMenu((s) => !s)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg text-[#6B7280] hover:text-[#0A0E1A] hover:bg-[#F9FAFB] transition"
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-emerald-100 hover:text-white hover:bg-white/10 transition"
               aria-label="Settings"
             >
               <Settings className="w-4 h-4" />
@@ -432,7 +434,8 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-black text-[#0A0E1A]">
-                  Welcome back, {profile.fullName.split(" ")[0] || profile.username}! 👋
+Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
+{isPremium && <PremiumStar size={22} />}
                 </h1>
                 <p className="text-sm text-[#6B7280] mt-1">Ready to crush your next examination?</p>
               </div>
@@ -612,7 +615,7 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
               <div className="max-w-2xl mx-auto border border-[#E5E7EB] rounded-2xl p-6 sm:p-8 bg-[#FFFFFF] shadow-sm space-y-5">
                 <div className="text-center space-y-1.5">
                   <Sparkles className="w-8 h-8 text-[#10B981] mx-auto" />
-                  <h2 className="text-xl font-bold text-[#0A0E1A] uppercase">AI Interactive Tutor (GPT OSS 20B)</h2>
+                  <h2 className="text-xl font-bold text-[#0A0E1A] uppercase">PassOnce AI Interactive Tutor</h2>
                   <p className="text-xs text-[#6B7280]">Ask about any topic, subject, or concept — no timed exam constraints.</p>
                 </div>
 
@@ -640,8 +643,18 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
                           {m.content}
                         </div>
                       ))}
-                      {tutorLoading && <p className="text-xs text-[#6B7280]">Thinking…</p>}
+{tutorLoading && <AiTutorTyping />}
                     </div>
+                    {tutorLimitReached && (
+  <div className="flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs">
+    <span className="font-semibold text-amber-800">
+      You've used your free AI message for today.
+    </span>
+    <Link href="/subscribe" className="shrink-0 px-4 py-2 bg-red-600 text-white rounded-lg font-bold uppercase hover:bg-red-700 transition">
+      Upgrade
+    </Link>
+  </div>
+)}
                     <div className="flex gap-2">
                       <input
                         value={tutorInput}
