@@ -347,7 +347,7 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
     }
     setShowFreeWarning(false);
     const subjectsParam = encodeURIComponent(selectedSubjects.join(","));
-    window.location.href = `/exam?exam=${activeExamId}&subjects=${subjectsParam}&mode=${examMode}&diff=${difficulty}&time=${durationMins}&q=${questionCount}&sq=${shuffleQuestions}&so=${shuffleOptions}&premium=${isPremium}`;
+    window.location.href = `/exam?exam=${activeExamId}&subjects=${subjectsParam}&mode=${examMode}&diff=${difficulty}&time=${durationMins}&q=${questionCount}&sq=${shuffleQuestions}&so=${shuffleOptions}`;
   };
 
   const handleStartExamClick = () => {
@@ -366,12 +366,12 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
     <div className="min-h-screen bg-[#F9FAFB] text-[#0A0E1A] font-sans flex flex-col">
 
       {/* Top Icon Nav — replaces the old sidebar; works the same on every screen size */}
-<header className="bg-[#065F46] border-b border-[#064E3B] shadow-md px-3 sm:px-6 py-2 sticky top-0 z-30">        <div className="flex items-center justify-between gap-2">
+<header className="bg-white border-b border-[#E5E7EB] shadow-sm px-3 sm:px-6 py-2 sticky top-0 z-30">        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 shrink-0">
-<div className="w-9 h-9 rounded-full bg-white flex items-center justify-center overflow-hidden shadow ring-2 ring-white/25">
+<div className="w-9 h-9 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center overflow-hidden shadow-sm">
   <Image src="/header-logo.png" alt="PassOnce logo" width={26} height={26} className="object-contain" />
 </div>
-<span className="font-extrabold text-sm tracking-tight hidden sm:inline text-white">PassOnce</span>
+<span className="font-extrabold text-sm tracking-tight hidden sm:inline text-[#0A0E1A]">PassOnce</span>
           </div>
 
           <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
@@ -386,7 +386,7 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
           <div className="flex items-center gap-1 shrink-0 relative">
             <button
               onClick={() => setShowSettingsMenu((s) => !s)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg text-emerald-100 hover:text-white hover:bg-white/10 transition"
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-[#6B7280] hover:text-[#0A0E1A] hover:bg-[#F9FAFB] transition"
               aria-label="Settings"
             >
               <Settings className="w-4 h-4" />
@@ -435,7 +435,7 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
               <div>
                 <h1 className="text-2xl font-black text-[#0A0E1A]">
 Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
-{isPremium && <PremiumStar size={22} />}
+{isPremium && <PremiumStar size={28} />}
                 </h1>
                 <p className="text-sm text-[#6B7280] mt-1">Ready to crush your next examination?</p>
               </div>
@@ -1076,7 +1076,7 @@ function TopNavIcon({ icon, label, onClick, active }: { icon: React.ReactNode; l
     <button
       onClick={onClick}
       className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold whitespace-nowrap transition ${
-        active ? "bg-[#10B981]/10 text-[#10B981]" : "text-[#6B7280] hover:text-[#0A0E1A] hover:bg-[#F9FAFB]"
+        active ? "bg-[#10B981]/10 text-[#047857]" : "text-[#6B7280] hover:text-[#0A0E1A] hover:bg-[#F9FAFB]"
       }`}
     >
       {icon}
