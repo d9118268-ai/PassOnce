@@ -717,60 +717,37 @@ Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
                   <p className="text-xs text-[#6B7280]">Ask about any topic, subject, or concept — no timed exam constraints.</p>
                 </div>
 
-                {!isPremium ? (
-                  <div className="text-center space-y-3 py-4">
-                    <Lock className="w-8 h-8 text-amber-500 mx-auto" />
-                    <p className="text-xs text-[#6B7280]">AI Tutor is a premium feature.</p>
-                    <Link href="/subscribe" className="inline-block px-6 py-2.5 bg-red-600 text-[#FFFFFF] rounded-lg font-bold text-xs uppercase hover:bg-red-700 transition">
-                      Unlock for ₦500/year
-                    </Link>
+                <>
+                  {!isPremium && (
+                    <div className="flex items-center justify-between gap-3 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-4 py-3 text-xs">
+                      <span className="font-semibold text-[#6B7280]">Free plan: 1 AI Tutor message per day.</span>
+                      <Link href="/subscribe" className="text-[#10B981] font-bold underline">Upgrade</Link>
+                    </div>
+                  )}
+                  <div className="max-h-80 overflow-y-auto space-y-2 border border-[#E5E7EB] rounded-xl p-4 bg-[#F9FAFB]">
+                    {tutorMessages.length === 0 && (
+                      <p className="text-xs text-[#6B7280] text-center py-6">Ask your first question to get started.</p>
+                    )}
+                    {tutorMessages.map((m, i) => (
+                      <div key={i} className={`max-w-[85%] px-3.5 py-2 rounded-xl text-sm ${m.role === "user" ? "bg-[#10B981] text-white ml-auto" : "bg-[#FFFFFF] border border-[#E5E7EB]"}`}>
+                        {m.content}
+                      </div>
+                    ))}
+                    {tutorLoading && <AiTutorTyping />}
                   </div>
-                ) : (
-                  <>
-                    <div className="max-h-80 overflow-y-auto space-y-2 border border-[#E5E7EB] rounded-xl p-4 bg-[#F9FAFB]">
-                      {tutorMessages.length === 0 && (
-                        <p className="text-xs text-[#6B7280] text-center py-6">Ask your first question to get started.</p>
-                      )}
-                      {tutorMessages.map((m, i) => (
-                        <div
-                          key={i}
-                          className={`max-w-[85%] px-3.5 py-2 rounded-xl text-sm ${
-                            m.role === "user" ? "bg-[#10B981] text-white ml-auto" : "bg-[#FFFFFF] border border-[#E5E7EB]"
-                          }`}
-                        >
-                          {m.content}
-                        </div>
-                      ))}
-{tutorLoading && <AiTutorTyping />}
+                  {tutorLimitReached && (
+                    <div className="flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs">
+                      <span className="font-semibold text-amber-800">You've used your free AI message for today.</span>
+                      <Link href="/subscribe" className="shrink-0 px-4 py-2 bg-red-600 text-white rounded-lg font-bold uppercase hover:bg-red-700 transition">Upgrade</Link>
                     </div>
-                    {tutorLimitReached && (
-  <div className="flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs">
-    <span className="font-semibold text-amber-800">
-      You've used your free AI message for today.
-    </span>
-    <Link href="/subscribe" className="shrink-0 px-4 py-2 bg-red-600 text-white rounded-lg font-bold uppercase hover:bg-red-700 transition">
-      Upgrade
-    </Link>
-  </div>
-)}
-                    <div className="flex gap-2">
-                      <input
-                        value={tutorInput}
-                        onChange={(e) => setTutorInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && sendTutorMessage()}
-                        placeholder="Ask a question…"
-                        className="flex-1 border border-[#E5E7EB] rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#10B981]"
-                      />
-                      <button
-                        onClick={sendTutorMessage}
-                        className="w-11 h-11 shrink-0 flex items-center justify-center bg-[#10B981] text-white rounded-lg hover:bg-[#0A0E1A] transition"
-                        aria-label="Send"
-                      >
-                        <Send className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </>
-                )}
+                  )}
+                  <div className="flex gap-2">
+                    <input value={tutorInput} onChange={(e) => setTutorInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendTutorMessage()} placeholder="Ask a question…" className="flex-1 border border-[#E5E7EB] rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#10B981]" disabled={tutorLimitReached} />
+                    <button onClick={sendTutorMessage} disabled={tutorLimitReached || tutorLoading} className="w-11 h-11 shrink-0 flex items-center justify-center bg-[#10B981] text-white rounded-lg hover:bg-[#0A0E1A] transition disabled:opacity-40" aria-label="Send">
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                </>
               </div>
             )}
 
