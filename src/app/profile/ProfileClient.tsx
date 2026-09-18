@@ -176,7 +176,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
             className={`relative overflow-hidden border rounded-2xl shadow-sm ${initial.subscriptionStatus === "premium" ? "po-premium-profile border-transparent" : "bg-white border-[#E5E7EB]"}`}
           >
             {initial.subscriptionStatus === "premium" && (
-              <div className="absolute inset-x-0 top-0 h-32 overflow-hidden">
+              <div className="absolute inset-0 z-0 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 via-cyan-400 via-purple-500 to-pink-500 opacity-90" />
                 <div className="po-premium-wave absolute -left-20 -top-16 w-72 h-72 rounded-full bg-white/25 blur-3xl" />
                 <div className="po-premium-wave po-premium-wave-2 absolute -right-20 -top-20 w-80 h-80 rounded-full bg-fuchsia-300/25 blur-3xl" />
@@ -191,7 +191,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
               </div>
             )}
 
-            <div className={`relative z-10 p-6 flex items-center gap-5 ${initial.subscriptionStatus === "premium" ? "pt-20" : ""}`}>
+            <div className={`relative z-10 p-6 flex items-center gap-5 min-h-[210px] ${initial.subscriptionStatus === "premium" ? "pt-24" : ""}`}>
               <div className="relative shrink-0">
                 {initial.subscriptionStatus === "premium" ? (
                   <PremiumAvatarFrame size={88}>
