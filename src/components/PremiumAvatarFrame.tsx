@@ -9,14 +9,17 @@ import React from "react";
 export default function PremiumAvatarFrame({
   children,
   size = 88,
+  variant = "rainbow",
 }: {
   children: React.ReactNode;
   size?: number;
+  variant?: "rainbow" | "glow" | "minimal";
 }) {
+  const frameClass = variant === "glow" ? "po-ring po-ring-glow-only" : variant === "minimal" ? "po-ring po-ring-minimal" : "po-ring";
   return (
     <div className="po-frame relative shrink-0" style={{ width: size, height: size }}>
-      <div className="po-ring absolute inset-0 rounded-full" />
-      <div className="po-ring-glow absolute -inset-1 rounded-full" />
+      <div className={`${frameClass} absolute inset-0 rounded-full`} />
+      {variant !== "minimal" && <div className="po-ring-glow absolute -inset-1 rounded-full" />}
       <div className="absolute inset-[4px] rounded-full overflow-hidden bg-white p-[2px]">
         <div className="w-full h-full rounded-full overflow-hidden bg-[#10B981]/10 flex items-center justify-center">
           {children}
@@ -45,6 +48,11 @@ export default function PremiumAvatarFrame({
             #22c55e
           );
           animation: po-spin 4s linear infinite;
+        }
+
+        .po-ring-minimal { background: #10b981; animation: none; }
+        .po-ring-glow-only {
+          background: conic-gradient(from 0deg, #60a5fa, #a855f7, #ec4899, #60a5fa);
         }
 
         .po-ring-glow {
