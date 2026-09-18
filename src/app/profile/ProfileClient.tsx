@@ -12,6 +12,7 @@ import {
   BookOpen,
   BarChart2,
   User,
+  Bot,
   LogOut,
   Camera,
   Shield,
@@ -212,6 +213,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
           <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
             <TopNavIcon icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" onClick={() => router.push("/dashboard")} />
             <TopNavIcon icon={<BookOpen className="w-4 h-4" />} label="Practice" onClick={() => router.push("/dashboard")} />
+            <TopNavIcon icon={<Bot className="w-4 h-4" />} label="AI Tutor" onClick={() => router.push("/dashboard?view=practice&tab=ai")} />
             <TopNavIcon icon={<BarChart2 className="w-4 h-4" />} label="Performance" onClick={() => router.push("/analytics")} />
             <TopNavIcon icon={<User className="w-4 h-4" />} label="Profile" active onClick={() => {}} />
           </nav>
