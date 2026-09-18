@@ -279,19 +279,16 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#0A0E1A] text-white rounded-full flex items-center justify-center hover:bg-[#10B981] transition shadow-md z-10"
-                  aria-label="Change avatar"
-                >
+                <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#0A0E1A] text-white rounded-full flex items-center justify-center hover:bg-[#10B981] transition shadow-md z-10 cursor-pointer" aria-label="Change avatar">
                   <Camera className="w-3 h-3" />
-                </button>
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarUpload} />
+                </label>
               </div>
 
               <div className="flex-1 min-w-0">
                 <h2 className={`font-bold truncate flex items-center gap-2 ${initial.subscriptionStatus === "premium" ? "text-white drop-shadow-sm" : "text-[#0A0E1A]"}`}>
                   {fullName || "Unnamed User"}
-                  {initial.subscriptionStatus === "premium" && <PremiumStar size={28} />}
+                  {initial.subscriptionStatus === "premium" && <PremiumStar size={36} />}
                 </h2>
                 <p className={`text-xs font-semibold truncate ${initial.subscriptionStatus === "premium" ? "text-white/90" : "text-[#10B981]"}`}>
                   @{username || "username"}
