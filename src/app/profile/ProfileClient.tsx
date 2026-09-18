@@ -52,6 +52,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
   const [avatarFrame, setAvatarFrame] = useState(initial.avatarFrame);
   const [styleSaved, setStyleSaved] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -97,6 +98,20 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
 
     setProfileSaved(true);
     setTimeout(() => setProfileSaved(false), 2500);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("Delete your PassOnce account permanently? This cannot be undone.")) return;
+    setDeletingAccount(true);
+    const res = await fetch("/api/account/delete", { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) {
+      setProfileError(data.error || "Unable to delete account.");
+      setDeletingAccount(false);
+      return;
+    }
+    router.push("/");
+    router.refresh();
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -556,9 +571,11 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
             </p>
             <button
               type="button"
-              className="px-5 py-2.5 border border-red-300 text-red-600 rounded-lg font-bold text-xs uppercase hover:bg-red-600 hover:text-[#FFFFFF] hover:border-red-600 transition"
+              onClick={handleDeleteAccount}
+              disabled={deletingAccount}
+              className="px-5 py-2.5 border border-red-300 text-red-600 rounded-lg font-bold text-xs uppercase hover:bg-red-600 hover:text-[#FFFFFF] hover:border-red-600 transition disabled:opacity-50"
             >
-              Delete Account
+              {deletingAccount ? "Deleting…" : "Delete Account"}
             </button>
           </div>
 
