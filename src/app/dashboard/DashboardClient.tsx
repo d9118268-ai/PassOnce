@@ -465,6 +465,7 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
                 </div>
               </div>
             )}
+          </div>
           <div className="flex items-center gap-1 shrink-0 relative">
             <button
               onClick={() => setShowSettingsMenu((s) => !s)}
