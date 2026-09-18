@@ -230,6 +230,15 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
     return () => { mounted = false; };
   }, []);
 
+  // Chat panel — messages live only in memory (per the no-local-storage /
+  // ephemeral-chat policy): nothing here is written to localStorage or a
+  // backend, so a refresh or leaving the app clears everything.
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatSearch, setChatSearch] = useState("");
+  const [activeChatUsername, setActiveChatUsername] = useState<string | null>(null);
+  const [chatThreads, setChatThreads] = useState<Record<string, ChatMessage[]>>({});
+  const [messageDraft, setMessageDraft] = useState("");
+
   useEffect(() => {
     if (!activeChatUsername || !currentUserId) return;
     const other = chatUsers.find((u) => u.username === activeChatUsername);
@@ -245,14 +254,6 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
     return () => { supabase.removeChannel(channel); };
   }, [activeChatUsername, currentUserId, chatUsers]);
 
-  // Chat panel — messages live only in memory (per the no-local-storage /
-  // ephemeral-chat policy): nothing here is written to localStorage or a
-  // backend, so a refresh or leaving the app clears everything.
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatSearch, setChatSearch] = useState("");
-  const [activeChatUsername, setActiveChatUsername] = useState<string | null>(null);
-  const [chatThreads, setChatThreads] = useState<Record<string, ChatMessage[]>>({});
-  const [messageDraft, setMessageDraft] = useState("");
   const [blockedNotice, setBlockedNotice] = useState(false);
   const messageLimitReached = !isPremium && messagesSentToday >= FREE_DAILY_MESSAGE_LIMIT;
   const [limitReachedNotice, setLimitReachedNotice] = useState(false);
