@@ -32,20 +32,15 @@ import {
   AlertTriangle,
   Sun,
   Moon,
+  Bell,
 } from "lucide-react";
 import { containsExplicitContent } from "@/lib/chat-filter";
 import AiTutorTyping from "@/components/AiTutorTyping";
 import PremiumStar from "@/components/PremiumStar";
 
-// Dummy directory for the username search — replace with a real user lookup
-// (Supabase) once accounts exist.
-const USER_DIRECTORY = [
-  { username: "chidera_o", displayName: "Chidera Okafor" },
-  { username: "bello_ahmed", displayName: "Ahmed Bello" },
-  { username: "tega_p", displayName: "Tega Preye" },
-  { username: "amaka_j", displayName: "Amaka Johnson" },
-  { username: "kunle99", displayName: "Kunle Adebayo" },
-];
+type ChatUser = { id: string; username: string; displayName: string };
+
+const USER_DIRECTORY: ChatUser[] = [];
 
 type ChatMessage = {
   id: number;
@@ -180,7 +175,7 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
   const [tutorLimitReached, setTutorLimitReached] = useState(false);
 
   const sendTutorMessage = async () => {
-    if (!tutorInput.trim() || !isPremium) return;
+    if (!tutorInput.trim() || tutorLoading) return;
     const userMsg = { role: "user" as const, content: tutorInput.trim() };
     setTutorMessages((m) => [...m, userMsg]);
     setTutorInput("");
@@ -192,7 +187,14 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
         body: JSON.stringify({ message: userMsg.content }),
       });
       const data = await res.json();
-      setTutorMessages((m) => [...m, { role: "assistant", content: data.reply || "Sorry, I couldn't get an answer just now." }]);
+      if (res.status === 429 || data.limitReached) {
+        setTutorLimitReached(true);
+        setTutorMessages((m) => [...m, { role: "assistant", content: data.error || "Your free AI Tutor limit has been reached for today." }]);
+      } else if (!res.ok) {
+        setTutorMessages((m) => [...m, { role: "assistant", content: data.error || "Sorry, I couldn't get an answer just now." }]);
+      } else {
+        setTutorMessages((m) => [...m, { role: "assistant", content: data.reply || "Sorry, I couldn't get an answer just now." }]);
+      }
     } catch {
       setTutorMessages((m) => [...m, { role: "assistant", content: "Sorry, I couldn't get an answer just now." }]);
     } finally {
@@ -202,6 +204,46 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
 
   const FREE_DAILY_MESSAGE_LIMIT = 2;
   const [messagesSentToday, setMessagesSentToday] = useState(0);
+  const [chatUsers, setChatUsers] = useState<ChatUser[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<{id:string;title:string;body:string;read:boolean;created_at:string}[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [hasResumeDraft, setHasResumeDraft] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let mounted = true;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !mounted) return;
+      setCurrentUserId(user.id);
+      const [{ data: users }, { data: notes }] = await Promise.all([
+        supabase.from("profiles").select("id, username, full_name").neq("id", user.id).order("username").limit(50),
+        supabase.from("notifications").select("id, title, body, read, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
+      ]);
+      if (mounted) {
+        setChatUsers((users || []).map((u) => ({ id: u.id, username: u.username || "", displayName: u.full_name || u.username || "Student" })));
+        setNotifications(notes || []);
+      }
+    })();
+    setHasResumeDraft(Boolean(localStorage.getItem("passonce-exam-draft")));
+    return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!activeChatUsername || !currentUserId) return;
+    const other = chatUsers.find((u) => u.username === activeChatUsername);
+    if (!other) return;
+    const supabase = createClient();
+    const channelName = ["passonce-chat", ...[currentUserId, other.id].sort()].join(":");
+    const channel = supabase.channel(channelName);
+    channel.on("broadcast", { event: "message" }, ({ payload }) => {
+      if (payload.senderId === currentUserId) return;
+      const incoming: ChatMessage = { id: Date.now(), from: "them", text: String(payload.text || "") };
+      setChatThreads((prev) => ({ ...prev, [activeChatUsername]: [...(prev[activeChatUsername] || []), incoming] }));
+    }).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [activeChatUsername, currentUserId, chatUsers]);
 
   // Chat panel — messages live only in memory (per the no-local-storage /
   // ephemeral-chat policy): nothing here is written to localStorage or a
@@ -216,16 +258,16 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
   const [limitReachedNotice, setLimitReachedNotice] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const activeChatUser = USER_DIRECTORY.find((u) => u.username === activeChatUsername) || null;
+  const activeChatUser = chatUsers.find((u) => u.username === activeChatUsername) || null;
   const activeThread = activeChatUsername ? chatThreads[activeChatUsername] || [] : [];
 
   const filteredDirectory = chatSearch.trim()
-    ? USER_DIRECTORY.filter(
+    ? chatUsers.filter(
         (u) =>
           u.username.toLowerCase().includes(chatSearch.trim().toLowerCase()) ||
           u.displayName.toLowerCase().includes(chatSearch.trim().toLowerCase())
       )
-    : USER_DIRECTORY;
+    : chatUsers;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -245,7 +287,7 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
     setLimitReachedNotice(false);
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     const text = messageDraft.trim();
     if (!text || !activeChatUsername) return;
 
@@ -273,19 +315,13 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
     setMessageDraft("");
     if (!isPremium) setMessagesSentToday((n) => n + 1);
 
-    // TODO: replace with Supabase Realtime Broadcast so messages relay
-    // live between the two users and are never written to a table.
-    // This canned reply is only a placeholder so the UI feels alive in the
-    // meantime — it is not a real second participant.
-    setTimeout(() => {
-      setChatThreads((prev) => ({
-        ...prev,
-        [activeChatUsername]: [
-          ...(prev[activeChatUsername] || []),
-          { id: Date.now() + 1, from: "them", text: "(Demo reply — real-time delivery comes with Supabase.)" },
-        ],
-      }));
-    }, 1200);
+    if (!currentUserId || !activeChatUser) return;
+    const supabase = createClient();
+    const channelName = ["passonce-chat", ...[currentUserId, activeChatUser.id].sort()].join(":");
+    const channel = supabase.channel(channelName);
+    await channel.subscribe();
+    await channel.send({ type: "broadcast", event: "message", payload: { senderId: currentUserId, text } });
+    supabase.removeChannel(channel);
   };
 
   // Exam / subject selection state (from the CBT setup screen)
@@ -384,6 +420,31 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
           </nav>
 
           <div className="flex items-center gap-1 shrink-0 relative">
+            <button onClick={() => setShowNotifications((s) => !s)} className="w-9 h-9 flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition relative" aria-label="Notifications">
+              <Bell className="w-4 h-4" />
+              {notifications.some((n) => !n.read) && <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-400" />}
+            </button>
+            {showNotifications && (
+              <div className="absolute right-12 top-full mt-2 w-72 bg-white border border-[#E5E7EB] rounded-xl shadow-lg z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-[#E5E7EB] flex items-center justify-between">
+                  <span className="text-xs font-black uppercase">Notifications</span>
+                  <button onClick={async () => {
+                    const supabase = createClient();
+                    const unread = notifications.filter((n) => !n.read).map((n) => n.id);
+                    if (unread.length) await supabase.from("notifications").update({ read: true }).in("id", unread);
+                    setNotifications((ns) => ns.map((n) => ({ ...n, read: true })));
+                  }} className="text-[10px] font-bold text-[#10B981]">Mark read</button>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.length === 0 ? <p className="p-6 text-xs text-[#6B7280] text-center">No notifications yet.</p> :
+                    notifications.map((n) => <div key={n.id} className="px-4 py-3 border-b border-[#E5E7EB] last:border-0">
+                      <p className="text-xs font-bold text-[#0A0E1A]">{n.title}</p>
+                      <p className="text-[11px] text-[#6B7280] mt-0.5">{n.body}</p>
+                    </div>)}
+                </div>
+              </div>
+            )}
+          <div className="flex items-center gap-1 shrink-0 relative">
             <button
               onClick={() => setShowSettingsMenu((s) => !s)}
               className="w-9 h-9 flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition"
@@ -435,7 +496,7 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
               <div>
                 <h1 className="text-2xl font-black text-[#0A0E1A]">
 Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
-{isPremium && <PremiumStar size={28} />}
+{isPremium && <PremiumStar size={36} />}
                 </h1>
                 <p className="text-sm text-[#6B7280] mt-1">Ready to crush your next examination?</p>
               </div>
@@ -717,7 +778,7 @@ Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
             {/* Ephemeral notice */}
             <div className="px-5 py-2 bg-[#F9FAFB] border-b border-[#E5E7EB]">
               <p className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-wide">
-                Temporary chat — nothing here is saved. It's gone once you leave the app.
+                Live chat via Supabase Realtime — messages are ephemeral and not stored.
               </p>
             </div>
 
