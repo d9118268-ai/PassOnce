@@ -260,12 +260,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
                 {initial.subscriptionStatus === "premium" ? (
                   <PremiumAvatarFrame size={88} variant={avatarFrame as "rainbow" | "glow" | "minimal"}>
                     <div className="w-full h-full bg-[#10B981]/10 text-[#10B981] flex items-center justify-center text-xl font-black">
-                      {avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-                      ) : (
-                        fullName.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("") || "U"
-                      )}
+                      {avatarUrl ? <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" /> : (fullName.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("") || "U")}
                     </div>
                   </PremiumAvatarFrame>
                 ) : (
