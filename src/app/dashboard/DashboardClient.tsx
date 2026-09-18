@@ -343,6 +343,27 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
 
   const activeExam = EXAM_SECTIONS.find((e) => e.id === activeExamId);
 
+  const resumeExam = () => {
+    try {
+      const draft = JSON.parse(localStorage.getItem("passonce-exam-draft") || "null");
+      if (!draft?.examId) return;
+      const params = new URLSearchParams({
+        exam: draft.examId,
+        subjects: (draft.subjects || []).join(","),
+        mode: draft.mode || "Practice",
+        diff: draft.difficulty || "Normal",
+        time: String(draft.durationMins || 60),
+        q: String(draft.questionCount || 40),
+        sq: String(draft.shuffleQuestions !== false),
+        so: String(draft.shuffleOptions !== false),
+      });
+      window.location.href = `/exam?${params.toString()}`;
+    } catch {
+      localStorage.removeItem("passonce-exam-draft");
+      setHasResumeDraft(false);
+    }
+  };
+
   const goToPractice = () => {
     setMainView("practice");
     setPracticeTab("cbt");
@@ -472,6 +493,12 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
                     Account Settings
                   </button>
                   <button
+                    onClick={() => router.push("/saved")}
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-[#0A0E1A] hover:bg-[#F9FAFB] transition border-t border-[#E5E7EB]"
+                  >
+                    Saved Questions
+                  </button>
+                  <button
                     onClick={handleSignOut}
                     className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition border-t border-[#E5E7EB]"
                   >
@@ -507,6 +534,16 @@ Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
                 Start New Practice <ArrowRight className="w-4 h-4" />
               </button>
             </div>
+
+            {hasResumeDraft && (
+              <div className="flex items-center justify-between gap-4 bg-white border border-[#10B981]/30 rounded-2xl p-4 shadow-sm">
+                <div>
+                  <p className="text-sm font-black text-[#0A0E1A]">You have an unfinished exam</p>
+                  <p className="text-xs text-[#6B7280] mt-0.5">Your answers, timer, bookmarks, and position were saved.</p>
+                </div>
+                <button onClick={resumeExam} className="shrink-0 px-4 py-2.5 bg-[#10B981] text-white rounded-lg text-xs font-bold hover:bg-[#0A0E1A] transition">Resume</button>
+              </div>
+            )}
 
             {/* Quick Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
