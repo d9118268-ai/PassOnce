@@ -180,7 +180,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 via-cyan-400 via-purple-500 to-pink-500 opacity-90" />
                 <div className="po-premium-wave absolute -left-20 -top-16 w-72 h-72 rounded-full bg-white/25 blur-3xl" />
                 <div className="po-premium-wave po-premium-wave-2 absolute -right-20 -top-20 w-80 h-80 rounded-full bg-fuchsia-300/25 blur-3xl" />
-                <div className="absolute inset-0 opacity-25 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,.7)_45%,transparent_55%)] bg-[length:220%_100%] animate-[po-premium-shine_5s_linear_infinite]" />
+                <div className="po-premium-shine absolute inset-0 opacity-25 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,.7)_45%,transparent_55%)] bg-[length:220%_100%]" />
                 <span className="po-premium-star po-p1">✦</span>
                 <span className="po-premium-star po-p2">✧</span>
                 <span className="po-premium-star po-p3">✦</span>
@@ -274,6 +274,10 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
                 mask-composite: exclude;
                 pointer-events: none;
                 animation: po-premium-border 5s linear infinite;
+              }
+
+              .po-premium-shine {
+                animation: po-premium-shine 5s linear infinite;
               }
 
               .po-premium-wave {
