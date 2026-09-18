@@ -13,7 +13,7 @@ export default async function ProfilePage() {
 
   const { data: profileRow } = await supabase
     .from("profiles")
-    .select("full_name, username, phone, subscription_status")
+    .select("full_name, username, phone, subscription_status, avatar_url, profile_theme, profile_effect, avatar_frame")
     .eq("id", user.id)
     .single();
 
@@ -23,6 +23,10 @@ export default async function ProfilePage() {
     email: user.email || "",
     phone: profileRow?.phone || "",
     subscriptionStatus: (profileRow?.subscription_status as "free" | "premium") || "free",
+    avatarUrl: profileRow?.avatar_url || "",
+    profileTheme: profileRow?.profile_theme || "aurora",
+    profileEffect: profileRow?.profile_effect || "sparkles",
+    avatarFrame: profileRow?.avatar_frame || "rainbow",
   };
 
   return <ProfileClient initial={initial} />;
