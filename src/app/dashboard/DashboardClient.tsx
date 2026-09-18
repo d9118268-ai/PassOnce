@@ -434,7 +434,8 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
 
           <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
             <TopNavIcon icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" active={mainView === "dashboard"} onClick={() => setMainView("dashboard")} />
-            <TopNavIcon icon={<BookOpen className="w-4 h-4" />} label="Practice" active={mainView === "practice"} onClick={goToPractice} />
+            <TopNavIcon icon={<BookOpen className="w-4 h-4" />} label="Practice" active={mainView === "practice" && practiceTab === "cbt"} onClick={goToPractice} />
+            <TopNavIcon icon={<Bot className="w-4 h-4" />} label="AI Tutor" active={mainView === "practice" && practiceTab === "ai"} onClick={() => { setMainView("practice"); setPracticeTab("ai"); }} />
             <TopNavIcon icon={<BarChart2 className="w-4 h-4" />} label="Performance" onClick={() => router.push("/analytics")} />
             <TopNavIcon icon={<MessageCircle className="w-4 h-4" />} label="Messages" onClick={() => setChatOpen(true)} />
             <TopNavIcon icon={<BookMarked className="w-4 h-4" />} label="Dictionary" onClick={() => setShowDictionary(true)} />
