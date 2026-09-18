@@ -258,7 +258,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
             <div className={`relative z-10 p-6 flex items-center gap-5 min-h-[210px] ${initial.subscriptionStatus === "premium" ? "pt-24" : ""}`}>
               <div className="relative shrink-0">
                 {initial.subscriptionStatus === "premium" ? (
-                  <PremiumAvatarFrame size={88}>
+                  <PremiumAvatarFrame size={88} variant={avatarFrame as "rainbow" | "glow" | "minimal"}>
                     <div className="w-full h-full bg-[#10B981]/10 text-[#10B981] flex items-center justify-center text-xl font-black">
                       {avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
