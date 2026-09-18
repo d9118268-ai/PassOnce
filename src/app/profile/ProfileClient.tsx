@@ -173,7 +173,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
 
           {/* Avatar + Account Badge */}
           <div
-            className={`relative overflow-hidden bg-white border rounded-2xl shadow-sm ${initial.subscriptionStatus === "premium" ? "po-premium-profile border-transparent" : "border-[#E5E7EB]"}`}
+            className={`relative overflow-hidden border rounded-2xl shadow-sm ${initial.subscriptionStatus === "premium" ? "po-premium-profile border-transparent" : "bg-white border-[#E5E7EB]"}`}
           >
             {initial.subscriptionStatus === "premium" && (
               <div className="absolute inset-x-0 top-0 h-32 overflow-hidden">
