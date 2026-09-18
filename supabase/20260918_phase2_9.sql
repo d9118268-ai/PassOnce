@@ -65,6 +65,7 @@ create policy "question_reports_own_select" on public.question_reports for selec
 drop policy if exists "notifications_own_select" on public.notifications;
 drop policy if exists "notifications_own_update" on public.notifications;
 create policy "notifications_own_select" on public.notifications for select using (auth.uid() = user_id);
+create policy "notifications_own_insert" on public.notifications for insert with check (auth.uid() = user_id);
 create policy "notifications_own_update" on public.notifications for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 insert into storage.buckets (id, name, public)
