@@ -137,12 +137,12 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
     <div className="min-h-screen bg-[#F9FAFB] text-[#0A0E1A] font-sans flex flex-col">
 
       {/* Top Icon Nav — matches dashboard, replaces the old sidebar */}
-<header className="bg-[#065F46] border-b border-[#064E3B] shadow-md px-3 sm:px-6 py-2 sticky top-0 z-30">        <div className="flex items-center justify-between gap-2">
+<header className="bg-white border-b border-[#E5E7EB] shadow-sm px-3 sm:px-6 py-2 sticky top-0 z-30">        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-7 h-7 relative">
-              <Image src="/header-logo.png" alt="PassOnce logo" fill className="object-contain" />
+            <div className="w-9 h-9 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center overflow-hidden shadow-sm">
+              <Image src="/header-logo.png" alt="PassOnce logo" width={26} height={26} className="object-contain" />
             </div>
-            <span className="font-extrabold text-sm tracking-tight hidden sm:inline">PassOnce</span>
+            <span className="font-extrabold text-sm tracking-tight hidden sm:inline text-[#0A0E1A]">PassOnce</span>
           </div>
 
           <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
@@ -172,43 +172,156 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
           </div>
 
           {/* Avatar + Account Badge */}
-          <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-6 flex items-center gap-5 shadow-sm">
-            <div className="relative shrink-0">
-              <div className="w-16 h-16 rounded-full bg-[#10B981]/10 text-[#10B981] flex items-center justify-center text-xl font-black">
-                {fullName
-                  .split(" ")
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .map((n) => n[0]?.toUpperCase())
-                  .join("") || "U"}
+          <div
+            className={`relative overflow-hidden bg-white border rounded-2xl shadow-sm ${initial.subscriptionStatus === "premium" ? "po-premium-profile border-transparent" : "border-[#E5E7EB]"}`}
+          >
+            {initial.subscriptionStatus === "premium" && (
+              <div className="absolute inset-x-0 top-0 h-32 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 via-cyan-400 via-purple-500 to-pink-500 opacity-90" />
+                <div className="po-premium-wave absolute -left-20 -top-16 w-72 h-72 rounded-full bg-white/25 blur-3xl" />
+                <div className="po-premium-wave po-premium-wave-2 absolute -right-20 -top-20 w-80 h-80 rounded-full bg-fuchsia-300/25 blur-3xl" />
+                <div className="absolute inset-0 opacity-25 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,.7)_45%,transparent_55%)] bg-[length:220%_100%] animate-[po-premium-shine_5s_linear_infinite]" />
+                <span className="po-premium-star po-p1">✦</span>
+                <span className="po-premium-star po-p2">✧</span>
+                <span className="po-premium-star po-p3">✦</span>
+                <span className="po-premium-star po-p4">✧</span>
+                <div className="absolute right-5 top-4 rounded-full bg-black/20 border border-white/30 px-3 py-1 text-[9px] font-black tracking-[0.18em] text-white uppercase backdrop-blur-sm">
+                  Premium Profile
+                </div>
               </div>
-              <button
-                type="button"
-                className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#0A0E1A] text-[#FFFFFF] rounded-full flex items-center justify-center hover:bg-[#10B981] transition"
-                aria-label="Change avatar"
+            )}
+
+            <div className={`relative z-10 p-6 flex items-center gap-5 ${initial.subscriptionStatus === "premium" ? "pt-20" : ""}`}>
+              <div className="relative shrink-0">
+                {initial.subscriptionStatus === "premium" ? (
+                  <PremiumAvatarFrame size={88}>
+                    <div className="w-full h-full bg-[#10B981]/10 text-[#10B981] flex items-center justify-center text-xl font-black">
+                      {fullName
+                        .split(" ")
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((n) => n[0]?.toUpperCase())
+                        .join("") || "U"}
+                    </div>
+                  </PremiumAvatarFrame>
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-[#10B981]/10 text-[#10B981] flex items-center justify-center text-xl font-black">
+                    {fullName
+                      .split(" ")
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map((n) => n[0]?.toUpperCase())
+                      .join("") || "U"}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#0A0E1A] text-white rounded-full flex items-center justify-center hover:bg-[#10B981] transition shadow-md z-10"
+                  aria-label="Change avatar"
+                >
+                  <Camera className="w-3 h-3" />
+                </button>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <h2 className={`font-bold truncate flex items-center gap-2 ${initial.subscriptionStatus === "premium" ? "text-white drop-shadow-sm" : "text-[#0A0E1A]"}`}>
+                  {fullName || "Unnamed User"}
+                  {initial.subscriptionStatus === "premium" && <PremiumStar size={28} />}
+                </h2>
+                <p className={`text-xs font-semibold truncate ${initial.subscriptionStatus === "premium" ? "text-white/90" : "text-[#10B981]"}`}>
+                  @{username || "username"}
+                </p>
+                <p className={`text-xs truncate ${initial.subscriptionStatus === "premium" ? "text-white/75" : "text-[#6B7280]"}`}>
+                  {email}
+                </p>
+              </div>
+
+              <span
+                className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${initial.subscriptionStatus === "premium"
+                  ? "bg-white/20 border-white/35 text-white shadow-sm backdrop-blur-sm"
+                  : "bg-[#F9FAFB] border-[#E5E7EB] text-[#6B7280]"}`}
               >
-                <Camera className="w-3 h-3" />
-              </button>
+                <Shield className="w-3 h-3" /> {initial.subscriptionStatus === "premium" ? "Premium" : "Free Plan"}
+              </span>
             </div>
-            <div className="flex-1 min-w-0">
-<h2 className="font-bold text-[#0A0E1A] truncate flex items-center gap-1.5">
-  {fullName || "Unnamed User"}
-  {initial.subscriptionStatus === "premium" && <PremiumStar size={20} />}
-</h2>              <p className="text-xs text-[#10B981] font-semibold truncate">@{username || "username"}</p>
-              <p className="text-xs text-[#6B7280] truncate">{email}</p>
-            </div>
-            <span
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                initial.subscriptionStatus === "premium"
-                  ? "bg-[#10B981]/10 border-[#10B981]/30 text-[#10B981]"
-                  : "bg-[#F9FAFB] border-[#E5E7EB] text-[#6B7280]"
-              }`}
-            >
-              <Shield className="w-3 h-3" /> {initial.subscriptionStatus === "premium" ? "Premium" : "Free Plan"}
-            </span>
+
+            {initial.subscriptionStatus === "premium" && (
+              <div className="relative z-10 px-6 pb-4 -mt-1">
+                <div className="h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                <p className="mt-3 text-[10px] font-bold tracking-wider uppercase text-white/75">
+                  Animated premium profile • PassOnce Plus
+                </p>
+              </div>
+            )}
+
+            <style jsx>{`
+              .po-premium-profile {
+                box-shadow:
+                  0 0 0 1px rgba(16,185,129,.18),
+                  0 18px 45px rgba(76,29,149,.12);
+              }
+
+              .po-premium-profile::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                border-radius: 1rem;
+                padding: 1px;
+                background: linear-gradient(120deg, rgba(16,185,129,.9), rgba(59,130,246,.8), rgba(236,72,153,.85), rgba(245,158,11,.8));
+                -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                -webkit-mask-composite: xor;
+                mask-composite: exclude;
+                pointer-events: none;
+                animation: po-premium-border 5s linear infinite;
+              }
+
+              .po-premium-wave {
+                animation: po-premium-float 6s ease-in-out infinite;
+              }
+
+              .po-premium-wave-2 {
+                animation-delay: -2.5s;
+                animation-duration: 7s;
+              }
+
+              .po-premium-star {
+                position: absolute;
+                color: white;
+                font-size: 16px;
+                line-height: 1;
+                text-shadow: 0 0 10px rgba(255,255,255,.9);
+                animation: po-premium-sparkle 2.5s ease-in-out infinite;
+              }
+
+              .po-p1 { left: 16%; top: 28%; }
+              .po-p2 { left: 38%; top: 54%; animation-delay: .6s; }
+              .po-p3 { right: 31%; top: 24%; animation-delay: 1.2s; }
+              .po-p4 { right: 12%; top: 62%; animation-delay: 1.8s; }
+
+              @keyframes po-premium-float {
+                0%, 100% { transform: translate3d(0,0,0) scale(1); }
+                50% { transform: translate3d(28px,8px,0) scale(1.08); }
+              }
+
+              @keyframes po-premium-sparkle {
+                0%, 100% { opacity: .25; transform: scale(.55) rotate(0deg); }
+                50% { opacity: 1; transform: scale(1.25) rotate(90deg); }
+              }
+
+              @keyframes po-premium-shine {
+                0% { background-position: 120% 0; }
+                100% { background-position: -120% 0; }
+              }
+
+              @keyframes po-premium-border {
+                0% { filter: hue-rotate(0deg); }
+                100% { filter: hue-rotate(360deg); }
+              }
+            `}</style>
           </div>
 
-          {/* Account Details Form */}
+
           <form
             onSubmit={handleSaveProfile}
             className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl shadow-sm overflow-hidden"
@@ -378,7 +491,7 @@ function TopNavIcon({ icon, label, onClick, active }: { icon: React.ReactNode; l
     <button
       onClick={onClick}
       className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold whitespace-nowrap transition ${
-        active ? "bg-[#10B981]/10 text-[#10B981]" : "text-[#6B7280] hover:text-[#0A0E1A] hover:bg-[#F9FAFB]"
+        active ? "bg-[#10B981]/10 text-[#047857]" : "text-[#6B7280] hover:text-[#0A0E1A] hover:bg-[#F9FAFB]"
       }`}
     >
       {icon}
