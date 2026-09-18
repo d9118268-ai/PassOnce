@@ -226,14 +226,14 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
           >
             {initial.subscriptionStatus === "premium" && (
               <div className="absolute inset-0 z-0 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 via-cyan-400 via-purple-500 to-pink-500 opacity-90" />
+                <div className={`absolute inset-0 opacity-95 ${profileTheme === "galaxy" ? "bg-gradient-to-br from-indigo-900 via-purple-700 to-fuchsia-500" : profileTheme === "neon" ? "bg-gradient-to-br from-cyan-400 via-blue-500 to-fuchsia-500" : profileTheme === "emerald" ? "bg-gradient-to-br from-emerald-500 via-teal-500 to-green-700" : "bg-gradient-to-br from-emerald-400 via-purple-500 to-pink-500"}`} />
                 <div className="po-premium-wave absolute -left-20 -top-16 w-72 h-72 rounded-full bg-white/25 blur-3xl" />
                 <div className="po-premium-wave po-premium-wave-2 absolute -right-20 -top-20 w-80 h-80 rounded-full bg-fuchsia-300/25 blur-3xl" />
-                <div className="po-premium-shine absolute inset-0 opacity-25 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,.7)_45%,transparent_55%)] bg-[length:220%_100%]" />
-                <span className="po-premium-star po-p1">✦</span>
-                <span className="po-premium-star po-p2">✧</span>
-                <span className="po-premium-star po-p3">✦</span>
-                <span className="po-premium-star po-p4">✧</span>
+                <div className={`po-premium-shine absolute inset-0 opacity-25 ${profileEffect === "none" ? "hidden" : ""} bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,.7)_45%,transparent_55%)] bg-[length:220%_100%]" />
+                {profileEffect === "sparkles" && <span className="po-premium-star po-p1">✦</span>}
+                {profileEffect === "sparkles" && <span className="po-premium-star po-p2">✧</span>}
+                {profileEffect === "sparkles" && <span className="po-premium-star po-p3">✦</span>}
+                {profileEffect === "sparkles" && <span className="po-premium-star po-p4">✧</span>}
                 <div className="absolute right-5 top-4 rounded-full bg-black/20 border border-white/30 px-3 py-1 text-[9px] font-black tracking-[0.18em] text-white uppercase backdrop-blur-sm">
                   Show off your style
                 </div>
