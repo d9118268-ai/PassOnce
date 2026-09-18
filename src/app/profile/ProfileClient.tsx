@@ -281,7 +281,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
               </div>
 
               <div className="flex-1 min-w-0">
-                <h2 className={`font-bold truncate flex items-center gap-2 ${initial.subscriptionStatus === "premium" ? "text-white drop-shadow-sm" : "text-[#0A0E1A]"}`}>
+                <h2 className={"font-bold truncate flex items-center gap-2 " + (initial.subscriptionStatus === "premium" ? "text-white drop-shadow-sm" : "text-[#0A0E1A]")}>
                   {fullName || "Unnamed User"}
                   {initial.subscriptionStatus === "premium" && <PremiumStar size={36} />}
                 </h2>
