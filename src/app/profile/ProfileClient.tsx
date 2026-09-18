@@ -255,7 +255,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
               </div>
             )}
 
-            <div className={`relative z-10 p-6 flex items-center gap-5 min-h-[210px] ${initial.subscriptionStatus === "premium" ? "pt-24" : ""}`}>
+            <div className={"relative z-10 p-6 flex items-center gap-5 min-h-[210px] " + (initial.subscriptionStatus === "premium" ? "pt-24" : "")}>
               <div className="relative shrink-0">
                 {initial.subscriptionStatus === "premium" ? (
                   <PremiumAvatarFrame size={88} variant={avatarFrame as "rainbow" | "glow" | "minimal"}>
