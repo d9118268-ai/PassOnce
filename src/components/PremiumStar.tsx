@@ -53,35 +53,9 @@ export default function PremiumStar({ size = 28 }: { size?: number }) {
       <style jsx>{`
         .po-star {
           position: relative;
-          animation: po-star-float 2.2s ease-in-out infinite;
           filter:
             drop-shadow(0 0 3px rgba(168, 85, 247, 0.7))
             drop-shadow(0 0 7px rgba(236, 72, 153, 0.35));
-        }
-
-        .po-star::after {
-          content: "";
-          position: absolute;
-          inset: 10%;
-          border-radius: 999px;
-          background: radial-gradient(circle, rgba(255,255,255,0.55), transparent 65%);
-          opacity: 0;
-          animation: po-star-shine 2.2s ease-in-out infinite;
-          pointer-events: none;
-        }
-
-        @keyframes po-star-float {
-          0%, 100% {
-            transform: translateY(0) rotate(-5deg) scale(1);
-          }
-          50% {
-            transform: translateY(-2px) rotate(5deg) scale(1.1);
-          }
-        }
-
-        @keyframes po-star-shine {
-          0%, 100% { opacity: 0; transform: scale(0.7); }
-          50% { opacity: 0.9; transform: scale(1.25); }
         }
       `}</style>
     </span>
