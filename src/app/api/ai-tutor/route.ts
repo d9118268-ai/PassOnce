@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       ? body.question.slice(0, 500)
       : "general study topic";
 
-  const systemPrompt = `You are a friendly, encouraging exam tutor for a Nigerian secondary-school student using PassOnce.
+  const systemPrompt = `You are a friendly, encouraging exam tutor for student using PassOnce.
 The student is currently looking at this practice question: "${questionContext.replace(/"/g, "'")}"
 Answer their question clearly and briefly (2-4 sentences), guiding their understanding rather than just stating facts. Use simple language.`;
 

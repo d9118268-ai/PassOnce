@@ -1,7 +1,16 @@
+
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ArrowLeft, CheckCircle2, XCircle, MinusCircle, Award } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Clock3,
+  MinusCircle,
+  Target,
+  XCircle,
+} from "lucide-react";
 
 const EXAM_NAMES: Record<string, string> = {
   jamb: "JAMB UTME",
@@ -14,78 +23,255 @@ const EXAM_NAMES: Record<string, string> = {
 function timeAgoLabel(isoDate: string): string {
   const diffMs = Date.now() - new Date(isoDate).getTime();
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
   if (days <= 0) return "Today";
   if (days === 1) return "1 day ago";
   if (days < 7) return `${days} days ago`;
+
   const weeks = Math.floor(days / 7);
   if (weeks === 1) return "1 week ago";
   if (weeks < 5) return `${weeks} weeks ago`;
+
   const months = Math.floor(days / 30);
   return months <= 1 ? "1 month ago" : `${months} months ago`;
 }
 
+function formatTime(seconds: number | null): string {
+  if (!seconds || seconds < 1) return "Not recorded";
+
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  if (minutes < 60) {
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  return `${hours}h ${remainingMinutes}m`;
+}
+
+function getStatusLabel(status: string, percentage: number): string {
+  if (status === "abandoned") return "Abandoned";
+  if (status === "cheated") return "Switch detected";
+  if (percentage >= 70) return "Completed";
+  return "Needs review";
+}
+
 export default async function AnalyticsPage() {
   const supabase = await createClient();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
   if (!user) redirect("/login");
 
-  const { data: attempts } = await supabase
+  const { data: attempts, error } = await supabase
     .from("attempts")
-    .select("id, exam_id, score, total_questions, unanswered, time_spent_seconds, status, created_at")
+    .select(
+      "id, exam_id, score, total_questions, unanswered, time_spent_seconds, status, created_at"
+    )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
-    .limit(10);
+    .limit(20);
+
+  if (error) {
+    console.error("Records query error:", error);
+  }
 
   const recent = attempts || [];
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] text-[#0A0E1A] font-sans flex flex-col">
-      <header className="bg-[#FFFFFF] border-b border-[#E5E7EB] px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:text-[#0A0E1A] hover:bg-[#E5E7EB]/50 transition">
-            <ArrowLeft className="w-4 h-4" />
+    <div className="min-h-screen bg-white text-[#064E3B]">
+      <header className="sticky top-0 z-50 border-b border-[#D1FAE5] bg-white px-4 py-4 sm:px-6">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <Link
+              href="/dashboard"
+              aria-label="Back to dashboard"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#D1FAE5] text-[#064E3B] transition hover:bg-[#ECFDF5]"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-extrabold tracking-tight text-[#064E3B]">
+                Records
+              </h1>
+              <p className="text-xs text-[#047857]">
+                Review your examination performance
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/dashboard"
+            className="flex shrink-0 items-center gap-2 rounded-lg bg-[#064E3B] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#047857]"
+          >
+            <span className="hidden sm:inline">Dashboard</span>
+            <ArrowRight className="h-4 w-4" />
           </Link>
-          <h1 className="font-extrabold text-lg tracking-tight text-[#0A0E1A]">Recent Results</h1>
         </div>
-        <Link href="/dashboard" className="bg-[#0A0E1A] text-[#FFFFFF] px-5 py-2 rounded-lg font-bold text-xs uppercase hover:bg-[#10B981] transition shadow-sm">
-          <span className="hidden sm:inline">Return to </span>Dashboard
-        </Link>
       </header>
 
-      <main className="max-w-3xl w-full mx-auto p-6 md:p-8 space-y-4 flex-1">
+      <main className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-6 md:py-8">
+        <section>
+          <h2 className="text-2xl font-extrabold tracking-tight text-[#064E3B]">
+            Your Records
+          </h2>
+          <p className="mt-1 text-sm text-[#047857]">
+            Select a record to review its examination details.
+          </p>
+        </section>
+
         {recent.length === 0 ? (
-          <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-10 text-center text-sm text-[#6B7280]">
-            No results yet — finish a practice exam to see it here.
-          </div>
+          <section className="rounded-2xl border border-[#D1FAE5] bg-white p-10 text-center">
+            <Target className="mx-auto h-8 w-8 text-[#10B981]" />
+            <h3 className="mt-4 text-base font-bold text-[#064E3B]">
+              No records yet
+            </h3>
+            <p className="mt-2 text-sm text-[#047857]">
+              Complete a practice examination to see your performance here.
+            </p>
+
+            <Link
+              href="/dashboard"
+              className="mt-5 inline-flex rounded-lg bg-[#10B981] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#064E3B]"
+            >
+              Start Practice
+            </Link>
+          </section>
         ) : (
-          recent.map((a) => {
-            const pct = Math.round((a.score / Math.max(a.total_questions, 1)) * 100);
-            return (
-              <div key={a.id} className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-2xl p-5 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[#10B981]/10 text-[#10B981] flex items-center justify-center shrink-0">
-                  <Award className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-bold text-[#0A0E1A] truncate">{EXAM_NAMES[a.exam_id] || a.exam_id.toUpperCase()}</p>
-                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 ${
-                      a.status === "abandoned" ? "bg-red-50 text-red-600" : pct >= 70 ? "bg-[#10B981]/10 text-[#10B981]" : "bg-amber-50 text-amber-600"
-                    }`}>
-                      {a.status === "abandoned" ? "Abandoned" : `${pct}%`}
-                    </span>
+          <div className="space-y-3">
+            {recent.map((attempt) => {
+              const totalQuestions = Math.max(
+                Number(attempt.total_questions) || 0,
+                1
+              );
+
+              const score = Number(attempt.score) || 0;
+              const unanswered = Number(attempt.unanswered) || 0;
+              const wrong = Math.max(
+                totalQuestions - score - unanswered,
+                0
+              );
+
+              const percentage = Math.round(
+                (score / totalQuestions) * 100
+              );
+
+              const statusLabel = getStatusLabel(
+                attempt.status,
+                percentage
+              );
+
+              return (
+                <details
+                  key={attempt.id}
+                  className="group overflow-hidden rounded-2xl border border-[#D1FAE5] bg-white transition hover:border-[#10B981]"
+                >
+                  <summary className="cursor-pointer list-none px-4 py-4 sm:px-5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#ECFDF5] text-[#047857]">
+                        <Target className="h-5 w-5" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h3 className="truncate text-sm font-extrabold text-[#064E3B] sm:text-base">
+                            {EXAM_NAMES[attempt.exam_id] ||
+                              String(attempt.exam_id).toUpperCase()}
+                          </h3>
+
+                          <span className="rounded-full bg-[#ECFDF5] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#047857]">
+                            {statusLabel}
+                          </span>
+                        </div>
+
+                        <p className="mt-1 text-xs text-[#047857]">
+                          {timeAgoLabel(attempt.created_at)}
+                        </p>
+                      </div>
+
+                      <div className="shrink-0 text-right">
+                        <p className="text-xl font-extrabold text-[#064E3B]">
+                          {percentage}%
+                        </p>
+                        <p className="text-[10px] font-semibold text-[#047857]">
+                          {score}/{totalQuestions}
+                        </p>
+                      </div>
+                    </div>
+                  </summary>
+
+                  <div className="border-t border-[#D1FAE5] bg-[#F0FDF4] px-4 py-5 sm:px-5">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="rounded-xl border border-[#D1FAE5] bg-white p-4">
+                        <CheckCircle2 className="h-4 w-4 text-[#10B981]" />
+                        <p className="mt-3 text-xs font-semibold text-[#047857]">
+                          Correct answers
+                        </p>
+                        <p className="mt-1 text-xl font-extrabold text-[#064E3B]">
+                          {score}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl border border-[#D1FAE5] bg-white p-4">
+                        <XCircle className="h-4 w-4 text-[#047857]" />
+                        <p className="mt-3 text-xs font-semibold text-[#047857]">
+                          Wrong answers
+                        </p>
+                        <p className="mt-1 text-xl font-extrabold text-[#064E3B]">
+                          {wrong}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl border border-[#D1FAE5] bg-white p-4">
+                        <MinusCircle className="h-4 w-4 text-[#047857]" />
+                        <p className="mt-3 text-xs font-semibold text-[#047857]">
+                          Skipped
+                        </p>
+                        <p className="mt-1 text-xl font-extrabold text-[#064E3B]">
+                          {unanswered}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl border border-[#D1FAE5] bg-white p-4">
+                        <Clock3 className="h-4 w-4 text-[#047857]" />
+                        <p className="mt-3 text-xs font-semibold text-[#047857]">
+                          Time spent
+                        </p>
+                        <p className="mt-1 text-base font-extrabold text-[#064E3B]">
+                          {formatTime(attempt.time_spent_seconds)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold text-[#064E3B]">
+                          Examination status
+                        </p>
+                        <p className="mt-1 text-xs text-[#047857]">
+                          {attempt.status}
+                        </p>
+                      </div>
+
+                      <Link
+                        href={`/analytics/${attempt.id}`}
+                        className="inline-flex items-center gap-2 rounded-lg bg-[#064E3B] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#047857]"
+                      >
+                        View Full Record
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </div>
                   </div>
-                  <p className="text-xs text-[#6B7280] mt-0.5">{timeAgoLabel(a.created_at)}</p>
-                  <div className="flex items-center gap-4 mt-2 text-[11px] font-semibold text-[#6B7280]">
-                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" /> {a.score} correct</span>
-                    <span className="flex items-center gap-1"><XCircle className="w-3.5 h-3.5 text-red-500" /> {a.total_questions - a.score - (a.unanswered || 0)} wrong</span>
-                    <span className="flex items-center gap-1"><MinusCircle className="w-3.5 h-3.5 text-[#6B7280]" /> {a.unanswered || 0} skipped</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })
+                </details>
+              );
+            })}
+          </div>
         )}
       </main>
     </div>

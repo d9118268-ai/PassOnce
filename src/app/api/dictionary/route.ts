@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const systemPrompt = `You are a dictionary for Nigerian secondary-school students using PassOnce.
+  const systemPrompt = `You are a dictionary for students using PassOnce.
 Given a word, respond with ONLY a JSON object (no markdown, no commentary) of this exact shape:
 {"partOfSpeech": string, "definition": string, "example": string}
 - "partOfSpeech": e.g. noun, verb, adjective.

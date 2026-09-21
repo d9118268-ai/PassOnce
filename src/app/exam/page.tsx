@@ -1,3 +1,4 @@
+
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ExamClient from "./ExamClient";
@@ -22,14 +23,31 @@ export default async function ExamPage({
     .eq("id", user.id)
     .single();
 
-  // Real value from the database — never trust the old ?premium=true/false
-  // URL param, since anyone could type that into the address bar.
   const isPremium = profileRow?.subscription_status === "premium";
-  const displayName = profileRow?.full_name || profileRow?.username || "Student";
+  const displayName =
+    profileRow?.full_name || profileRow?.username || "Student";
 
-  const subjects = decodeURIComponent(params.subjects || "")
+  const subjects = decodeURIComponent(params.subjects || params.subs || "")
     .split(",")
     .filter(Boolean);
+
+  let questionCounts: Record<string, number> = {};
+
+  try {
+    questionCounts = params.counts
+      ? JSON.parse(params.counts)
+      : {};
+  } catch {
+    questionCounts = {};
+  }
+
+  const questionCount =
+    Number(params.q) ||
+    subjects.reduce(
+      (total, subject) => total + (questionCounts[subject] || 0),
+      0
+    ) ||
+    40;
 
   return (
     <ExamClient
@@ -38,10 +56,16 @@ export default async function ExamPage({
       isPremium={isPremium}
       examId={params.exam || "jamb"}
       subjects={subjects.length ? subjects : ["General"]}
-      mode={(params.mode as "Practice" | "Study" | "Mock") || "Practice"}
-      difficulty={(params.diff as "Easy" | "Normal" | "Hard" | "Mindbender") || "Normal"}
+      questionCounts={questionCounts}
+      mode={
+        (params.mode as "Practice" | "Study" | "Mock") || "Practice"
+      }
+      difficulty={
+        (params.diff as "Easy" | "Normal" | "Hard" | "Mindbender") ||
+        "Normal"
+      }
       durationMins={Number(params.time) || 60}
-      questionCount={Number(params.q) || 40}
+      questionCount={questionCount}
       shuffleQuestions={params.sq !== "false"}
       shuffleOptions={params.so !== "false"}
     />

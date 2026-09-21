@@ -10,7 +10,6 @@ import {
   BookOpen,
   BarChart2,
   User,
-  LogOut,
   ArrowRight,
   ArrowLeft,
   BrainCircuit,
@@ -40,7 +39,6 @@ import PremiumStar from "@/components/PremiumStar";
 
 type ChatUser = { id: string; username: string; displayName: string };
 
-const USER_DIRECTORY: ChatUser[] = [];
 
 type ChatMessage = {
   id: number;
@@ -107,7 +105,6 @@ const EXAM_SECTIONS = [
 
 type MainView = "dashboard" | "practice";
 type PracticeTab = "cbt" | "ai";
-
 export type RecentAttemptRow = {
   id: string;
   exam: string;
@@ -157,8 +154,12 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
+    // Reading localStorage must happen after mount (it doesn't exist during
+    // SSR), so this synchronous setState-on-mount is intentional — doing it
+    // any other way risks a hydration mismatch instead.
     const stored = localStorage.getItem("passonce-theme");
     const isDark = stored === "dark";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDarkMode(isDark);
     document.documentElement.classList.toggle("dark", isDark);
   }, []);
@@ -226,6 +227,7 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
         setNotifications(notes || []);
       }
     })();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage read, see comment above
     setHasResumeDraft(Boolean(localStorage.getItem("passonce-exam-draft")));
     return () => { mounted = false; };
   }, []);
@@ -434,7 +436,8 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
 
           <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
             <TopNavIcon icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" active={mainView === "dashboard"} onClick={() => setMainView("dashboard")} />
-            <TopNavIcon icon={<BookOpen className="w-4 h-4" />} label="Practice" active={mainView === "practice"} onClick={goToPractice} />
+            <TopNavIcon icon={<BookOpen className="w-4 h-4" />} label="Practice" active={mainView === "practice" && practiceTab === "cbt"} onClick={goToPractice} />
+            <TopNavIcon icon={<Bot className="w-4 h-4" />} label="AI Tutor" active={mainView === "practice" && practiceTab === "ai"} onClick={() => { setMainView("practice"); setPracticeTab("ai"); }} />
             <TopNavIcon icon={<BarChart2 className="w-4 h-4" />} label="Performance" onClick={() => router.push("/analytics")} />
             <TopNavIcon icon={<MessageCircle className="w-4 h-4" />} label="Messages" onClick={() => setChatOpen(true)} />
             <TopNavIcon icon={<BookMarked className="w-4 h-4" />} label="Dictionary" onClick={() => setShowDictionary(true)} />
@@ -523,9 +526,9 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
             {/* Welcome Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-black text-[#0A0E1A]">
-Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
-{isPremium && <PremiumStar size={36} />}
+                <h1 className="text-2xl font-black text-[#0A0E1A] flex items-center gap-2">
+                  <span>Welcome back, {profile.fullName.split(" ")[0] || profile.username}!</span>
+                  {isPremium && <PremiumStar size={22} />}
                 </h1>
                 <p className="text-sm text-[#6B7280] mt-1">Ready to crush your next examination?</p>
               </div>
@@ -663,12 +666,6 @@ Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
                 >
                   CBT
                 </button>
-                <button
-                  onClick={() => setPracticeTab("ai")}
-                  className={practiceTab === "ai" ? "text-[#0A0E1A] font-bold border-b-2 border-[#10B981] pb-1" : "text-[#6B7280] hover:text-[#0A0E1A]"}
-                >
-                  AI Tutor
-                </button>
               </nav>
 
               <span className="shrink-0" />
@@ -739,7 +736,7 @@ Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
                   </div>
                   {tutorLimitReached && (
                     <div className="flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs">
-                      <span className="font-semibold text-amber-800">You've used your free AI message for today.</span>
+                      <span className="font-semibold text-amber-800">You&apos;ve used your free AI message for today.</span>
                       <Link href="/subscribe" className="shrink-0 px-4 py-2 bg-red-600 text-white rounded-lg font-bold uppercase hover:bg-red-700 transition">Upgrade</Link>
                     </div>
                   )}
@@ -870,7 +867,7 @@ Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
                   )}
                   {blockedNotice && (
                     <p className="text-[11px] font-semibold text-red-600">
-                      Message blocked — that language isn't allowed here.
+                      Message blocked — that language isn&apos;t allowed here.
                     </p>
                   )}
                   {limitReachedNotice && (
@@ -919,7 +916,7 @@ Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
               <h3 className="font-black text-sm uppercase">Warning</h3>
             </div>
             <p className="text-xs text-[#6B7280] leading-relaxed">
-              You'll continue seeing the same practice questions as before. Subscribing for{" "}
+              You&apos;ll continue seeing the same practice questions as before. Subscribing for{" "}
               <span className="font-bold text-[#0A0E1A]">₦500</span> unlocks more — different questions every
               time, detailed explanations, and your own choice of time limit, question count, and difficulty.
             </p>
@@ -1042,7 +1039,7 @@ Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
                     <label className="text-[#6B7280] font-medium block mb-1">Select Mode</label>
                     <select
                       value={examMode}
-                      onChange={(e) => setExamMode(e.target.value as any)}
+                      onChange={(e) => setExamMode(e.target.value as "Practice" | "Study" | "Mock")}
                       className="w-full bg-[#FFFFFF] border border-[#E5E7EB] rounded-lg p-2 text-[#0A0E1A] font-medium focus:outline-none focus:border-[#10B981]"
                     >
                       <option value="Practice">Practice (Instant Marks)</option>
@@ -1057,7 +1054,7 @@ Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
                     </label>
                     <select
                       value={difficulty}
-                      onChange={(e) => setDifficulty(e.target.value as any)}
+                      onChange={(e) => setDifficulty(e.target.value as "Easy" | "Normal" | "Hard" | "Mindbender")}
                       disabled={!isPremium}
                       className="w-full bg-[#FFFFFF] border border-[#E5E7EB] rounded-lg p-2 text-[#0A0E1A] font-medium focus:outline-none focus:border-[#10B981] disabled:bg-[#F9FAFB] disabled:text-[#6B7280] disabled:cursor-not-allowed"
                     >
@@ -1224,7 +1221,7 @@ function DictionaryModal({ onClose }: { onClose: () => void }) {
         <div className="text-sm space-y-1">
           <p className="text-xs font-bold text-[#10B981] uppercase">{result.partOfSpeech}</p>
           <p className="text-[#0A0E1A]">{result.definition}</p>
-          {result.example && <p className="text-xs text-[#6B7280] italic">"{result.example}"</p>}
+          {result.example && <p className="text-xs text-[#6B7280] italic">&quot;{result.example}&quot;</p>}
         </div>
       )}
     </ModalShell>

@@ -37,6 +37,7 @@ type ExamClientProps = {
   isPremium: boolean;
   examId: string;
   subjects: string[];
+  questionCounts: Record<string, number>;
   mode: Mode;
   difficulty: Difficulty;
   durationMins: number;
@@ -124,6 +125,7 @@ export default function ExamClient({
   isPremium,
   examId,
   subjects,
+  questionCounts,
   mode,
   difficulty,
   durationMins,
