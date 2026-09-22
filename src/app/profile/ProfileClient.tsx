@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
-import PremiumStar from "@/components/PremiumStar";
-import PremiumAvatarFrame from "@/components/PremiumAvatarFrame";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import {
   LayoutDashboard,
   BookOpen,
@@ -259,22 +258,17 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
 
             <div className={"relative z-10 p-6 flex items-center gap-5 min-h-[210px] " + (initial.subscriptionStatus === "premium" ? "pt-24" : "")}>
               <div className="relative shrink-0">
-                {initial.subscriptionStatus === "premium" ? (
-                  <PremiumAvatarFrame size={88} variant={avatarFrame as "rainbow" | "glow" | "minimal"}>
-                    <div className="w-full h-full bg-[#10B981]/10 text-[#10B981] flex items-center justify-center text-xl font-black">
-                      {avatarUrl ? <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" /> : (fullName.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("") || "U")}
-                    </div>
-                  </PremiumAvatarFrame>
-                ) : (
-                  <div className="w-16 h-16 rounded-full bg-[#10B981]/10 text-[#10B981] flex items-center justify-center text-xl font-black">
-                    {fullName
-                      .split(" ")
-                      .filter(Boolean)
-                      .slice(0, 2)
-                      .map((n) => n[0]?.toUpperCase())
-                      .join("") || "U"}
-                  </div>
-                )}
+{initial.subscriptionStatus === "premium" ? (
+  <div className="w-[88px] h-[88px] rounded-full p-[3px] bg-gradient-to-tr from-sky-400 via-blue-500 to-purple-600">
+    <div className="w-full h-full rounded-full overflow-hidden bg-[#10B981]/10 text-[#10B981] flex items-center justify-center text-xl font-black">
+      {avatarUrl ? <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" /> : (fullName.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("") || "U")}
+    </div>
+  </div>
+) : (
+  <div className="w-16 h-16 rounded-full bg-[#10B981]/10 text-[#10B981] flex items-center justify-center text-xl font-black">
+    {fullName.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]?.toUpperCase()).join("") || "U"}
+  </div>
+)}
 
                 <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#0A0E1A] text-white rounded-full flex items-center justify-center hover:bg-[#10B981] transition shadow-md z-10 cursor-pointer" aria-label="Change avatar">
                   <Camera className="w-3 h-3" />
@@ -285,8 +279,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
               <div className="flex-1 min-w-0">
                 <h2 className={"font-bold truncate flex items-center gap-2 " + (initial.subscriptionStatus === "premium" ? "text-white drop-shadow-sm" : "text-[#0A0E1A]")}>
                   {fullName || "Unnamed User"}
-                  {initial.subscriptionStatus === "premium" && <PremiumStar size={36} />}
-                </h2>
+{initial.subscriptionStatus === "premium" && <VerifiedBadge size={16} />}                </h2>
                 <p className={`text-xs font-semibold truncate ${initial.subscriptionStatus === "premium" ? "text-white/90" : "text-[#10B981]"}`}>
                   @{username || "username"}
                 </p>

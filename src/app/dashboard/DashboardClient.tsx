@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import { containsExplicitContent } from "@/lib/chat-filter";
 import AiTutorTyping from "@/components/AiTutorTyping";
-import PremiumStar from "@/components/PremiumStar";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 type ChatUser = { id: string; username: string; displayName: string };
 
@@ -530,8 +530,7 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
               <div>
                 <h1 className="text-2xl font-black text-[#0A0E1A]">
 Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
-{isPremium && <PremiumStar size={36} />}
-                </h1>
+{isPremium && <VerifiedBadge size={16} />}                </h1>
                 <p className="text-sm text-[#6B7280] mt-1">Ready to crush your next examination?</p>
               </div>
               <button
