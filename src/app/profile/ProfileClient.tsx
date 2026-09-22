@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 import Image from "next/image";
 import PremiumStar from "@/components/PremiumStar";
 import PremiumAvatarFrame from "@/components/PremiumAvatarFrame";
@@ -17,6 +18,7 @@ import {
   Shield,
   KeyRound,
   CheckCircle2,
+  X,
 } from "lucide-react";
 
 export type ProfileInitialData = {
@@ -275,11 +277,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
                 )}
 
                 <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#0A0E1A] text-white rounded-full flex items-center justify-center hover:bg-[#10B981] transition shadow-md z-10 cursor-pointer" aria-label="Change avatar">
-                  {avatarUploading ? (
-                    <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <Camera className="w-3 h-3" />
-                  )}
+                  <Camera className="w-3 h-3" />
                   <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleAvatarUpload} />
                 </label>
               </div>
@@ -287,7 +285,7 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
               <div className="flex-1 min-w-0">
                 <h2 className={"font-bold truncate flex items-center gap-2 " + (initial.subscriptionStatus === "premium" ? "text-white drop-shadow-sm" : "text-[#0A0E1A]")}>
                   {fullName || "Unnamed User"}
-                  {initial.subscriptionStatus === "premium" && <PremiumStar size={22} />}
+                  {initial.subscriptionStatus === "premium" && <PremiumStar size={36} />}
                 </h2>
                 <p className={`text-xs font-semibold truncate ${initial.subscriptionStatus === "premium" ? "text-white/90" : "text-[#10B981]"}`}>
                   @{username || "username"}
@@ -468,86 +466,25 @@ export default function ProfileClient({ initial }: { initial: ProfileInitialData
             <section className="bg-white border border-[#E5E7EB] rounded-2xl shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-[#E5E7EB]">
                 <h3 className="text-sm font-bold text-[#0A0E1A] uppercase">Premium Style</h3>
-                <p className="text-[11px] text-[#6B7280] mt-1">Pick the look used on your premium profile.</p>
+                <p className="text-[11px] text-[#6B7280] mt-1">Choose the look used on your premium profile.</p>
               </div>
-
-              <div className="p-6 space-y-6">
-                <div>
-                  <p className="text-xs font-semibold text-[#6B7280] mb-2">Theme</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                      { id: "aurora", label: "Aurora", swatch: "bg-gradient-to-br from-emerald-400 via-purple-500 to-pink-500" },
-                      { id: "galaxy", label: "Galaxy", swatch: "bg-gradient-to-br from-indigo-900 via-purple-700 to-fuchsia-500" },
-                      { id: "neon", label: "Neon", swatch: "bg-gradient-to-br from-cyan-400 via-blue-500 to-fuchsia-500" },
-                      { id: "emerald", label: "Emerald", swatch: "bg-gradient-to-br from-emerald-500 via-teal-500 to-green-700" },
-                    ].map((t) => (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => setProfileTheme(t.id)}
-                        className={`relative rounded-xl overflow-hidden h-16 ${t.swatch} transition ${
-                          profileTheme === t.id ? "ring-2 ring-offset-2 ring-[#0A0E1A]" : "hover:opacity-90"
-                        }`}
-                      >
-                        <span className="absolute bottom-1 left-2 text-[10px] font-bold text-white drop-shadow">{t.label}</span>
-                        {profileTheme === t.id && (
-                          <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-white/90 flex items-center justify-center text-[9px] font-black text-[#0A0E1A]">✓</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold text-[#6B7280] mb-2">Effect</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { id: "sparkles", label: "Sparkles", icon: "✦" },
-                      { id: "shine", label: "Moving Shine", icon: "◈" },
-                      { id: "none", label: "Clean", icon: "—" },
-                    ].map((eff) => (
-                      <button
-                        key={eff.id}
-                        type="button"
-                        onClick={() => setProfileEffect(eff.id)}
-                        className={`flex flex-col items-center justify-center gap-1 h-16 rounded-xl border text-xs font-semibold transition ${
-                          profileEffect === eff.id
-                            ? "border-[#0A0E1A] bg-[#0A0E1A] text-white"
-                            : "border-[#E5E7EB] text-[#6B7280] hover:border-[#10B981]"
-                        }`}
-                      >
-                        <span className="text-base leading-none">{eff.icon}</span>
-                        {eff.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold text-[#6B7280] mb-2">Avatar Frame</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { id: "rainbow", label: "Rainbow" },
-                      { id: "glow", label: "Glow" },
-                      { id: "minimal", label: "Minimal" },
-                    ].map((f) => (
-                      <button
-                        key={f.id}
-                        type="button"
-                        onClick={() => setAvatarFrame(f.id)}
-                        className={`h-16 rounded-xl border text-xs font-semibold transition ${
-                          avatarFrame === f.id
-                            ? "border-[#0A0E1A] bg-[#0A0E1A] text-white"
-                            : "border-[#E5E7EB] text-[#6B7280] hover:border-[#10B981]"
-                        }`}
-                      >
-                        {f.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              <div className="p-6 grid sm:grid-cols-3 gap-4 text-xs">
+                <label className="font-semibold text-[#6B7280]">Theme
+                  <select value={profileTheme} onChange={(e) => setProfileTheme(e.target.value)} className="mt-1 w-full border border-[#E5E7EB] rounded-lg p-2.5 text-[#0A0E1A]">
+                    <option value="aurora">Aurora</option><option value="galaxy">Galaxy</option><option value="neon">Neon</option><option value="emerald">Emerald</option>
+                  </select>
+                </label>
+                <label className="font-semibold text-[#6B7280]">Effect
+                  <select value={profileEffect} onChange={(e) => setProfileEffect(e.target.value)} className="mt-1 w-full border border-[#E5E7EB] rounded-lg p-2.5 text-[#0A0E1A]">
+                    <option value="sparkles">Sparkles</option><option value="shine">Moving Shine</option><option value="none">Clean</option>
+                  </select>
+                </label>
+                <label className="font-semibold text-[#6B7280]">Avatar Frame
+                  <select value={avatarFrame} onChange={(e) => setAvatarFrame(e.target.value)} className="mt-1 w-full border border-[#E5E7EB] rounded-lg p-2.5 text-[#0A0E1A]">
+                    <option value="rainbow">Rainbow</option><option value="glow">Glow</option><option value="minimal">Minimal</option>
+                  </select>
+                </label>
               </div>
-
               <div className="px-6 py-4 bg-[#F9FAFB] border-t border-[#E5E7EB] flex justify-end items-center gap-3">
                 {styleSaved && <span className="text-xs font-bold text-[#10B981]">Style saved</span>}
                 <button type="button" onClick={saveStyle} className="px-5 py-2.5 bg-[#0A0E1A] text-white rounded-lg font-bold text-xs uppercase hover:bg-[#10B981] transition">Save Style</button>

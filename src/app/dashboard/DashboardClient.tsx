@@ -10,6 +10,7 @@ import {
   BookOpen,
   BarChart2,
   User,
+  LogOut,
   ArrowRight,
   ArrowLeft,
   BrainCircuit,
@@ -39,6 +40,7 @@ import PremiumStar from "@/components/PremiumStar";
 
 type ChatUser = { id: string; username: string; displayName: string };
 
+const USER_DIRECTORY: ChatUser[] = [];
 
 type ChatMessage = {
   id: number;
@@ -105,6 +107,7 @@ const EXAM_SECTIONS = [
 
 type MainView = "dashboard" | "practice";
 type PracticeTab = "cbt" | "ai";
+
 export type RecentAttemptRow = {
   id: string;
   exam: string;
@@ -154,9 +157,8 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
-    // Reading localStorage must happen after mount (it doesn't exist during
-    // SSR), so this synchronous setState-on-mount is intentional — doing it
-    // any other way risks a hydration mismatch instead.
+    // Reading localStorage must happen after mount (unavailable during SSR);
+    // doing this any other way risks a hydration mismatch instead.
     const stored = localStorage.getItem("passonce-theme");
     const isDark = stored === "dark";
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -526,9 +528,9 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
             {/* Welcome Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-black text-[#0A0E1A] flex items-center gap-2">
-                  <span>Welcome back, {profile.fullName.split(" ")[0] || profile.username}!</span>
-                  {isPremium && <PremiumStar size={22} />}
+                <h1 className="text-2xl font-black text-[#0A0E1A]">
+Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
+{isPremium && <PremiumStar size={36} />}
                 </h1>
                 <p className="text-sm text-[#6B7280] mt-1">Ready to crush your next examination?</p>
               </div>
@@ -665,6 +667,12 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
                   className={practiceTab === "cbt" ? "text-[#0A0E1A] font-bold border-b-2 border-[#10B981] pb-1" : "text-[#6B7280] hover:text-[#0A0E1A]"}
                 >
                   CBT
+                </button>
+                <button
+                  onClick={() => setPracticeTab("ai")}
+                  className={practiceTab === "ai" ? "text-[#0A0E1A] font-bold border-b-2 border-[#10B981] pb-1" : "text-[#6B7280] hover:text-[#0A0E1A]"}
+                >
+                  AI Tutor
                 </button>
               </nav>
 

@@ -31,13 +31,20 @@ type Question = {
   explanation: string;
 };
 
+type RawGeneratedQuestion = {
+  subject?: string;
+  prompt?: string;
+  options?: string[];
+  correctIndex?: number;
+  explanation?: string;
+};
+
 type ExamClientProps = {
   userId: string;
   displayName: string;
   isPremium: boolean;
   examId: string;
   subjects: string[];
-  questionCounts: Record<string, number>;
   mode: Mode;
   difficulty: Difficulty;
   durationMins: number;
@@ -125,7 +132,6 @@ export default function ExamClient({
   isPremium,
   examId,
   subjects,
-  questionCounts,
   mode,
   difficulty,
   durationMins,
@@ -178,10 +184,12 @@ export default function ExamClient({
         const data = await res.json();
         if (!Array.isArray(data.questions) || data.questions.length === 0) throw new Error("No questions");
 
-        let generated: Question[] = data.questions.map((q: any, idx: number) => {
+        let generated: Question[] = data.questions.map((q: RawGeneratedQuestion, idx: number) => {
           const options: string[] = Array.isArray(q.options) && q.options.length === 4 ? q.options : ["Option A", "Option B", "Option C", "Option D"];
           const shuffledOptions = shuffleOptions ? seededShuffle(options, idx + 7) : options;
-          const correctIndex = shuffleOptions ? shuffledOptions.indexOf(options[q.correctIndex] ?? options[0]) : q.correctIndex ?? 0;
+          const correctIndex = shuffleOptions
+            ? shuffledOptions.indexOf(options[q.correctIndex ?? 0] ?? options[0])
+            : q.correctIndex ?? 0;
           return {
             id: idx,
             subject: q.subject || subjects[idx % subjects.length],
@@ -323,8 +331,11 @@ export default function ExamClient({
   useEffect(() => {
     if (submitted || loadingQuestions || !questions || !current) return;
     if (secondsLeft <= 0) {
-      handleSubmit();
-      return;
+      // Deferred rather than called synchronously in the effect body, so
+      // the setState chain inside handleSubmit runs as its own scheduled
+      // task instead of cascading directly off this effect.
+      const t = setTimeout(handleSubmit, 0);
+      return () => clearTimeout(t);
     }
     const t = setTimeout(() => {
       setSecondsLeft((s) => s - 1);
@@ -457,7 +468,7 @@ export default function ExamClient({
       {!isPremium && !usedFallback && (
         <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-4">
           <div className="flex items-center justify-between gap-3 bg-[#F9FAFB] border border-[#E5E7EB] px-4 py-2.5 rounded-xl text-xs font-semibold text-[#6B7280]">
-            <span>Free plan — you'll see this same question set every attempt.</span>
+            <span>Free plan — you&apos;ll see this same question set every attempt.</span>
             <a href="/subscribe" className="text-[#10B981] font-bold underline shrink-0">Upgrade for fresh questions</a>
           </div>
         </div>
@@ -581,7 +592,7 @@ export default function ExamClient({
           <div className="flex items-center gap-2 text-red-600">
             <AlertTriangle className="w-5 h-5" /><h3 className="font-bold text-sm uppercase">Log Out of Exam?</h3>
           </div>
-          <p className="text-xs text-[#6B7280] leading-relaxed">Your progress will be saved as abandoned. This can't be resumed.</p>
+          <p className="text-xs text-[#6B7280] leading-relaxed">Your progress will be saved as abandoned. This can&apos;t be resumed.</p>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setShowExitConfirm(false)} className="px-4 py-2 border border-[#E5E7EB] rounded-lg text-xs font-bold text-[#6B7280]">Stay</button>
             <button onClick={() => (submitted ? router.push("/dashboard") : handleAbandon())} className="px-4 py-2 bg-red-600 text-[#FFFFFF] rounded-lg text-xs font-bold hover:bg-red-700">Log Out</button>
@@ -794,7 +805,7 @@ function ReportErrorModal({ onClose, question, examId, subject, userId, onSent }
         <p className="text-sm text-[#10B981] font-semibold flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> Thanks — your report was noted.</p>
       ) : (
         <>
-          <p className="text-xs text-[#6B7280] line-clamp-2">Re: "{question}"</p>
+          <p className="text-xs text-[#6B7280] line-clamp-2">Re: &quot;{question}&quot;</p>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
