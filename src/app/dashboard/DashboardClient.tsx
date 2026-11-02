@@ -211,7 +211,6 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<{id:string;title:string;body:string;read:boolean;created_at:string}[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [hasResumeDraft, setHasResumeDraft] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -229,8 +228,7 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
         setNotifications(notes || []);
       }
     })();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage read, see comment above
-    setHasResumeDraft(Boolean(localStorage.getItem("passonce-exam-draft")));
+    localStorage.removeItem("passonce-exam-draft"); // clear drafts saved by older versions
     return () => { mounted = false; };
   }, []);
 
@@ -347,27 +345,6 @@ export default function DashboardClient({ profile, stats, recentAttempts }: Dash
   const FREE_QUESTION_COUNT = 40;
 
   const activeExam = EXAM_SECTIONS.find((e) => e.id === activeExamId);
-
-  const resumeExam = () => {
-    try {
-      const draft = JSON.parse(localStorage.getItem("passonce-exam-draft") || "null");
-      if (!draft?.examId) return;
-      const params = new URLSearchParams({
-        exam: draft.examId,
-        subjects: (draft.subjects || []).join(","),
-        mode: draft.mode || "Practice",
-        diff: draft.difficulty || "Normal",
-        time: String(draft.durationMins || 60),
-        q: String(draft.questionCount || 40),
-        sq: String(draft.shuffleQuestions !== false),
-        so: String(draft.shuffleOptions !== false),
-      });
-      window.location.href = `/exam?${params.toString()}`;
-    } catch {
-      localStorage.removeItem("passonce-exam-draft");
-      setHasResumeDraft(false);
-    }
-  };
 
   const goToPractice = () => {
     setMainView("practice");
@@ -540,16 +517,6 @@ Welcome back, {profile.fullName.split(" ")[0] || profile.username}!
                 Start New Practice <ArrowRight className="w-4 h-4" />
               </button>
             </div>
-
-            {hasResumeDraft && (
-              <div className="flex items-center justify-between gap-4 bg-white border border-[#10B981]/30 rounded-2xl p-4 shadow-sm">
-                <div>
-                  <p className="text-sm font-black text-[#0A0E1A]">You have an unfinished exam</p>
-                  <p className="text-xs text-[#6B7280] mt-0.5">Your answers, timer, bookmarks, and position were saved.</p>
-                </div>
-                <button onClick={resumeExam} className="shrink-0 px-4 py-2.5 bg-[#10B981] text-white rounded-lg text-xs font-bold hover:bg-[#0A0E1A] transition">Resume</button>
-              </div>
-            )}
 
             {/* Quick Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

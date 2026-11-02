@@ -163,7 +163,6 @@ export default function ExamClient({
   // Toolbar modals
   const [showCalculator, setShowCalculator] = useState(false);
   const [showReportError, setShowReportError] = useState(false);
-  const [draftRestored, setDraftRestored] = useState(false);
   const [reportSent, setReportSent] = useState(false);
 
   // Load questions — everyone calls the same route. The server decides
@@ -205,24 +204,6 @@ export default function ExamClient({
           setQuestions(generated);
           setCurrentSubject(generated[0]?.subject || "");
           setUsedFallback(false);
-          try {
-            const rawDraft = localStorage.getItem("passonce-exam-draft");
-            if (rawDraft) {
-              const draft = JSON.parse(rawDraft);
-              if (draft.examId === examId && Array.isArray(draft.questions) && draft.questions.length) {
-                setQuestions(draft.questions);
-                setAnswers(draft.answers || {});
-                setFlagged(new Set<number>(draft.flagged || []));
-                setTimeSpent(draft.timeSpent || {});
-                setSecondsLeft(typeof draft.secondsLeft === "number" ? draft.secondsLeft : durationMins * 60);
-                setCurrentSubject(draft.currentSubject || generated[0]?.subject || "");
-                setLocalIndex(typeof draft.localIndex === "number" ? draft.localIndex : 0);
-                setDraftRestored(true);
-              }
-            }
-          } catch {
-            localStorage.removeItem("passonce-exam-draft");
-          }
         }
       } catch {
         if (!cancelled) {
@@ -301,8 +282,6 @@ export default function ExamClient({
       } catch {
         // Non-fatal — the review still shows locally if the database write fails.
       }
-      localStorage.removeItem("passonce-exam-draft");
-
       setSaving(false);
       setSubmitted(true);
       if (status === "completed") {
@@ -317,15 +296,10 @@ export default function ExamClient({
   const handleSubmit = useCallback(() => finalizeSubmit("completed"), [finalizeSubmit]);
   const handleAbandon = useCallback(() => finalizeSubmit("abandoned"), [finalizeSubmit]);
 
-  // Save in-progress exam state so a refresh or leaving the page can be resumed.
+  // Drafts saved by older versions are removed; in-progress state is no longer persisted.
   useEffect(() => {
-    if (!questions || submitted || loadingQuestions) return;
-    localStorage.setItem("passonce-exam-draft", JSON.stringify({
-      examId, subjects, mode, difficulty, durationMins, questionCount,
-      questions, answers, flagged: Array.from(flagged), timeSpent,
-      secondsLeft, currentSubject, localIndex, savedAt: Date.now(),
-    }));
-  }, [questions, answers, flagged, timeSpent, secondsLeft, currentSubject, localIndex, submitted, loadingQuestions, examId, subjects, mode, difficulty, durationMins, questionCount]);
+    localStorage.removeItem("passonce-exam-draft");
+  }, []);
 
   // Countdown + per-question time tracking (one shared 1s tick)
   useEffect(() => {
@@ -660,12 +634,6 @@ export default function ExamClient({
           onSent={() => setReportSent(true)}
         />
       )}
-      {draftRestored && !submitted && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-[#0A0E1A] text-white px-4 py-2.5 rounded-full text-xs font-bold shadow-xl">
-          Your previous exam progress was restored.
-        </div>
-      )}
-
     </div>
   );
 }
