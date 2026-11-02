@@ -56,7 +56,6 @@ export default async function ExamPage({
       isPremium={isPremium}
       examId={params.exam || "jamb"}
       subjects={subjects.length ? subjects : ["General"]}
-      questionCounts={questionCounts}
       mode={
         (params.mode as "Practice" | "Study" | "Mock") || "Practice"
       }
